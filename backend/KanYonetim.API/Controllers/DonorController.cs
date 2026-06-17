@@ -96,7 +96,7 @@ namespace KanYonetim.API.Controllers
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var today = DateTime.UtcNow;
-            var startDate = new DateTime(today.Year, today.Month, 1).AddMonths(-5);
+            var startDate = DateTime.SpecifyKind(new DateTime(today.Year, today.Month, 1).AddMonths(-5), DateTimeKind.Utc);
 
             var applications = await _context.DonationApplications
                 .Where(a => a.DonorId == userId && a.ApplicationDate >= startDate)

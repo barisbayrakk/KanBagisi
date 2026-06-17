@@ -169,6 +169,11 @@ const UserLayout = ({ children, user, setUser }) => {
     if (!user) return;
     const fetchStats = async () => {
       try {
+        const localAlerts = JSON.parse(localStorage.getItem('stockAlerts') || '[]');
+        if (localAlerts.length > 0) {
+          setActiveRequestsCount(localAlerts.length);
+          return;
+        }
         const statsRes = await axios.get('/Public/home-stats');
         setActiveRequestsCount(statsRes.data.activeRequestsCount || 0);
       } catch (error) {
@@ -176,9 +181,15 @@ const UserLayout = ({ children, user, setUser }) => {
       }
     };
     fetchStats();
-    // Poll every 60 seconds
-    const interval = setInterval(fetchStats, 60000);
-    return () => clearInterval(interval);
+    
+    const handleStorageChange = () => fetchStats();
+    window.addEventListener('storage', handleStorageChange);
+    
+    const interval = setInterval(fetchStats, 10000); // Poll faster for demo consistency
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [user]);
 
   const fetchNotifications = async () => {
@@ -234,6 +245,22 @@ const UserLayout = ({ children, user, setUser }) => {
       toast.success('Tüm bildirimler okundu olarak işaretlendi.');
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
+    }
+  };
+
+  const markAllAsReadSilent = async () => {
+    try {
+      try {
+        await axios.post('/User/notifications/read-all');
+      } catch (e) {}
+      
+      const localNotifs = JSON.parse(localStorage.getItem('user_notifications') || '[]');
+      const updated = localNotifs.map(n => (!n.receiverTc || n.receiverTc === user.tc) ? { ...n, isRead: true } : n);
+      localStorage.setItem('user_notifications', JSON.stringify(updated));
+      
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    } catch (error) {
+      console.error('Error marking all notifications as read silently:', error);
     }
   };
 
@@ -505,7 +532,13 @@ const UserLayout = ({ children, user, setUser }) => {
             {/* Notifications */}
             <div style={{ position: 'relative' }}>
               <button 
-                onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
+                onClick={() => {
+                  const nextState = !showNotificationsDropdown;
+                  setShowNotificationsDropdown(nextState);
+                  if (nextState) {
+                    markAllAsReadSilent();
+                  }
+                }}
                 style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', transition: 'color 0.2s', padding: '0.25rem', outline: 'none' }}
                 onMouseOver={e => e.currentTarget.style.color = '#991b1b'}
                 onMouseOut={e => e.currentTarget.style.color = '#64748b'}

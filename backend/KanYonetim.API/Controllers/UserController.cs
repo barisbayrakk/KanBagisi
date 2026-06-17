@@ -77,7 +77,8 @@ namespace KanYonetim.API.Controllers
                     LocationBasedNotifications = user.LocationBasedNotifications,
                     TwoFactorEnabled = user.TwoFactorEnabled,
                     IsPhoneVerified = user.IsPhoneVerified,
-                    ProfileCompletionRate = user.ProfileCompletionRate
+                    ProfileCompletionRate = user.ProfileCompletionRate,
+                    LastDonationDate = user.LastDonationDate
                 };
 
                 return Ok(profileDto);

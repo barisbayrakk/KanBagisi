@@ -795,6 +795,25 @@ const MyRequests = ({ user }) => {
         setAllApps(updatedApps);
       }
     }
+    if (activeTab === 'applied') {
+      const msgs = JSON.parse(localStorage.getItem('bloodMessages') || '[]');
+      let updated = false;
+      const updatedMsgs = msgs.map(m => {
+        if (
+          m.senderTc !== user.tc &&
+          !(m.readBy || []).includes(user.tc) &&
+          (m.text.includes('Protokol Numarası') || m.text.includes('Doğrulama Kodu') || m.text.includes('başvurunuz için'))
+        ) {
+          updated = true;
+          return { ...m, readBy: [...(m.readBy || []), user.tc] };
+        }
+        return m;
+      });
+      if (updated) {
+        localStorage.setItem('bloodMessages', JSON.stringify(updatedMsgs));
+        setAllMessages(updatedMsgs);
+      }
+    }
   }, [activeTab, myAlerts, myCompletedAlerts, user.tc]);
 
   const getApplicantsForAlert = (alertId) => {
@@ -1182,7 +1201,8 @@ const KanTalepleri = ({ user }) => {
     };
 
     const dates = [];
-    const currentUserData = usersList.find(u => u.tc === user.tc) || user;
+    const localUsers = JSON.parse(localStorage.getItem('usersList') || '[]');
+    const currentUserData = localUsers.find(u => u.tc === user.tc) || user;
     if (currentUserData?.lastDonationDate) dates.push(currentUserData.lastDonationDate);
     if (user?.lastDonationDate) dates.push(user.lastDonationDate);
     
@@ -1267,7 +1287,7 @@ const KanTalepleri = ({ user }) => {
       senderTc: alert.requesterTc,
       senderName: alert.requester,
       text: `Merhaba, kan bağışı başvurunuz için çok teşekkür ederim.\n\nHastane işlemleri için gereken bilgiler:\n\nProtokol Numarası:\n${alert.protocolNumber || 'PRT-X'}\n\nDoğrulama Kodu:\n${verificationCode}\n\nLütfen hastaneye gittiğinizde görevliye bu bilgileri iletiniz.`,
-      readBy: [alert.requesterTc],
+      readBy: [alert.requesterTc, user.tc],
       time: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
     };
     const allMsgs = JSON.parse(localStorage.getItem('bloodMessages') || '[]');
@@ -2029,15 +2049,23 @@ const Dashboard = ({ user, usersList, setUsersList }) => {
   let nextDateText = 'Hemen yapabilirsiniz';
   let nextDateColor = '#16a34a'; // Green by default
   let nextDateBg = 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)';
-  if (currentUserData?.lastDonationDate) {
-    const lastDate = new Date(currentUserData.lastDonationDate);
-    const daysToAdd = currentUserData.gender === 'Kadın' ? 120 : 90;
-    const nextDate = new Date(lastDate.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
+  if (currentUserData?.lastDonationDate && currentUserData.lastDonationDate !== 'Kayıt Bulunmuyor') {
+    let lastDate;
+    if (typeof currentUserData.lastDonationDate === 'string' && currentUserData.lastDonationDate.includes('.') && !currentUserData.lastDonationDate.includes('-') && currentUserData.lastDonationDate.split('.').length === 3) {
+      const parts = currentUserData.lastDonationDate.split('.');
+      lastDate = new Date(parts[2], parts[1]-1, parts[0]);
+    } else {
+      lastDate = new Date(currentUserData.lastDonationDate);
+    }
+    if (!isNaN(lastDate.getTime())) {
+      const daysToAdd = currentUserData.gender === 'Kadın' ? 120 : 90;
+      const nextDate = new Date(lastDate.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
 
-    if (nextDate > new Date()) {
-      nextDateText = nextDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
-      nextDateColor = '#991b1b'; // Red if waiting
-      nextDateBg = 'linear-gradient(135deg, #fef2f2 0%, #ffe4e6 100%)';
+      if (nextDate > new Date()) {
+        nextDateText = nextDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+        nextDateColor = '#991b1b'; // Red if waiting
+        nextDateBg = 'linear-gradient(135deg, #fef2f2 0%, #ffe4e6 100%)';
+      }
     }
   }
 
@@ -2771,7 +2799,13 @@ const AdminDashboard = ({ user, usersList, setUsersList }) => {
 
     // Warn if donor is within wait period
     if (matchedUser && matchedUser.lastDonationDate && matchedUser.lastDonationDate !== 'Kayıt Bulunmuyor') {
-      const lastDate = new Date(matchedUser.lastDonationDate);
+      let lastDate;
+      if (typeof matchedUser.lastDonationDate === 'string' && matchedUser.lastDonationDate.includes('.') && !matchedUser.lastDonationDate.includes('-') && matchedUser.lastDonationDate.split('.').length === 3) {
+        const parts = matchedUser.lastDonationDate.split('.');
+        lastDate = new Date(parts[2], parts[1]-1, parts[0]);
+      } else {
+        lastDate = new Date(matchedUser.lastDonationDate);
+      }
       if (!isNaN(lastDate.getTime())) {
         const daysToAdd = matchedUser.gender === 'Kadın' ? 120 : 90;
         const nextDate = new Date(lastDate.getTime() + daysToAdd * 24 * 60 * 60 * 1000);

@@ -183,6 +183,7 @@ namespace KanYonetim.API.Models.DTOs
         public bool TwoFactorEnabled { get; set; }
         public bool IsPhoneVerified { get; set; }
         public int ProfileCompletionRate { get; set; }
+        public DateTime? LastDonationDate { get; set; }
     }
 
     public class UpdateUserProfileDto

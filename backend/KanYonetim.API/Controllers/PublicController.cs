@@ -47,7 +47,7 @@ namespace KanYonetim.API.Controllers
                 .Select(g => new
                 {
                     Name = g.Key,
-                    Value = g.Sum(r => r.UnitsNeeded)
+                    Value = g.Count()
                 })
                 .OrderByDescending(x => x.Value)
                 .Take(5)
