@@ -1,0 +1,6 @@
+@KanYonetim.API_HostAddress = http://localhost:5090
+
+GET {{KanYonetim.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

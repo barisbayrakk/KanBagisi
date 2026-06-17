@@ -1,0 +1,11 @@
+{
+  "name": "kan-yonetim-platformu",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install-frontend": "cd frontend && npm install",
+    "start-frontend": "cd frontend && npm run dev",
+    "start-backend": "cd backend/KanYonetim.API && dotnet run",
+    "dev": "npm run install-frontend && (npm run start-frontend & npm run start-backend)"
+  }
+}
