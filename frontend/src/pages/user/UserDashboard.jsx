@@ -360,38 +360,39 @@ const UserDashboard = ({ user }) => {
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem' }} className="welcome-card-badges">
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.25rem' }} className="welcome-card-badges">
             {/* Eligibility Badge */}
             {resolvedEligibility ? (
               resolvedEligibility.isEligible ? (
                 <div style={{
                   flex: 1,
-                  backgroundColor: '#ecfdf5',
-                  borderRadius: '8px',
-                  padding: '0.75rem',
-                  border: '1px solid #d1fae5',
+                  background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+                  borderRadius: '12px',
+                  padding: '0.85rem 1rem',
+                  border: '1px solid #a7f3d0',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'center',
-                  gap: '0.25rem',
+                  gap: '0.35rem',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.05)',
                   animation: 'pulse 2s infinite'
                 }}>
                   <span style={{ 
-                    color: '#059669', 
+                    color: '#047857', 
                     fontSize: '0.8rem', 
                     fontWeight: '800',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.25rem'
+                    gap: '0.35rem'
                   }}>
-                    <CheckCircle size={14} fill="#059669" color="white" /> Hazırsınız!
+                    <CheckCircle size={16} fill="#10b981" color="white" /> Yeniden Bağış İçin Uygun
                   </span>
-                  <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#065f46', lineHeight: 1.2 }}>
-                    Yeniden hayat kurtarmaya hazırsınız!
+                  <span style={{ fontSize: '0.85rem', fontWeight: '800', color: '#065f46', lineHeight: 1.3 }}>
+                    Tebrikler! Yeniden hayat kurtarmaya hazırsınız.
                   </span>
                   <button 
                     onClick={() => toast.success('Tebrikler, yeniden bağış yapmaya hazırsınız!', { icon: '❤️' })}
-                    style={{ background: 'none', border: 'none', color: '#047857', fontSize: '0.65rem', fontWeight: '700', textDecoration: 'underline', cursor: 'pointer', textAlign: 'left', marginTop: '0.1rem', padding: 0 }}
+                    style={{ background: 'none', border: 'none', color: '#047857', fontSize: '0.7rem', fontWeight: '800', textDecoration: 'underline', cursor: 'pointer', textAlign: 'left', marginTop: '0.15rem', padding: 0 }}
                   >
                     Detayları Gör
                   </button>
@@ -399,31 +400,42 @@ const UserDashboard = ({ user }) => {
               ) : (
                 <div style={{
                   flex: 1,
-                  backgroundColor: '#fffbeb',
-                  borderRadius: '8px',
-                  padding: '0.6rem 0.75rem',
-                  border: '1px solid #fef3c7',
+                  background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                  borderRadius: '12px',
+                  padding: '0.85rem 1rem',
+                  border: '1px solid #fde047',
                   display: 'flex',
                   flexDirection: 'column',
-                  justifyContent: 'space-between'
+                  justifyContent: 'space-between',
+                  gap: '0.35rem',
+                  boxShadow: '0 4px 12px rgba(245, 158, 11, 0.04)'
                 }}>
                   <span style={{ 
                     color: '#d97706', 
-                    fontSize: '0.7rem', 
+                    fontSize: '0.8rem', 
                     fontWeight: '800',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.25rem'
+                    gap: '0.35rem'
                   }}>
-                    <XCircle size={12} fill="#d97706" color="white" /> Yeniden Bağış İçin
+                    <Clock size={16} fill="#f59e0b" color="white" /> Yeniden Bağış İçin Bekleme Süresi
                   </span>
 
-                  <span style={{ fontSize: '0.8rem', fontWeight: '800', color: '#b45309', lineHeight: 1.4, margin: '0.35rem 0' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: '800', color: '#854d0e', lineHeight: 1.3 }}>
                     Şu anda kan vermeye uygun değilsiniz.
                   </span>
                   
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.35rem 0', padding: '0.5rem 0.75rem', backgroundColor: '#fffbeb', borderRadius: '6px', border: '1px solid #fef3c7' }}>
-                    <Calendar size={16} color="#d97706" />
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem', 
+                    margin: '0.2rem 0', 
+                    padding: '0.55rem 0.85rem', 
+                    backgroundColor: 'rgba(255, 255, 255, 0.75)', 
+                    borderRadius: '8px', 
+                    border: '1px solid rgba(217, 119, 6, 0.12)' 
+                  }}>
+                    <Calendar size={15} color="#d97706" />
                     <span style={{ fontSize: '0.8rem', fontWeight: '800', color: '#b45309' }}>
                       <strong>{new Date(resolvedEligibility.nextEligibleDate).toLocaleDateString('tr-TR')}</strong> tarihinde tekrar kan verebilirsiniz.
                     </span>
@@ -435,46 +447,41 @@ const UserDashboard = ({ user }) => {
                       const formatted = nextDateObj.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
                       toast(`Son bağışınız üzerinden güvenli bağış aralığı geçmemiştir. Erkekler için 90 gün (3 ay), Kadınlar için 120 gün (4 ay) bekleme süresi uygulanır. Bir sonraki bağış yapabileceğiniz tarih: ${formatted}`, { icon: 'ℹ️' });
                     }}
-                    style={{ background: 'none', border: 'none', color: '#b45309', fontSize: '0.65rem', fontWeight: '700', textDecoration: 'underline', cursor: 'pointer', textAlign: 'left', padding: 0 }}
+                    style={{ background: 'none', border: 'none', color: '#b45309', fontSize: '0.7rem', fontWeight: '800', textDecoration: 'underline', cursor: 'pointer', textAlign: 'left', padding: 0 }}
                   >
                     Detaylar
                   </button>
                 </div>
               )
             ) : (
-              <div style={{ flex: 1, padding: '0.75rem', fontSize: '0.8rem', color: '#64748b' }}>
+              <div style={{ flex: 1, padding: '1rem', fontSize: '0.85rem', color: '#64748b', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 Durum hesaplanıyor...
               </div>
             )}
 
             {/* Blood Type Box */}
             <div style={{
-              width: '100px',
-              background: 'linear-gradient(135deg, #fef2f2 0%, #ffe4e6 100%)',
-              border: '1px solid #ffd1d5',
-              borderRadius: '8px',
+              width: '110px',
+              background: 'linear-gradient(135deg, #fff5f5 0%, #ffe3e3 100%)',
+              border: '1px solid #fec2c2',
+              borderRadius: '12px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '0.5rem'
+              padding: '0.75rem',
+              boxShadow: '0 4px 10px rgba(239, 68, 68, 0.06)'
             }}>
-              <span style={{ fontSize: '1.25rem', fontWeight: '900', color: '#991b1b' }}>
+              <span style={{ fontSize: '1.4rem', fontWeight: '900', color: '#991b1b', letterSpacing: '0.5px' }}>
                 {user?.bloodType ? user.bloodType.replace('+', ' Rh(+)').replace('-', ' Rh(-)') : 'B Rh(+)'}
               </span>
-              <span style={{ fontSize: '0.6rem', color: '#9f1239', fontWeight: '700', marginTop: '0.2rem' }}>
+              <span style={{ fontSize: '0.65rem', color: '#9f1239', fontWeight: '700', marginTop: '0.25rem' }}>
                 Kan Grubunuz
               </span>
             </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', borderTop: '1px solid #f1f5f9', paddingTop: '0.85rem' }} className="welcome-card-footer">
-            {resolvedEligibility && !resolvedEligibility.isEligible && resolvedEligibility.nextEligibleDate && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#b45309', fontSize: '0.75rem', fontWeight: '800', backgroundColor: '#fffbeb', border: '1px solid #fef3c7', padding: '0.4rem 0.75rem', borderRadius: '6px' }}>
-                <span style={{ display: 'inline-block', width: '6px', height: '6px', backgroundColor: '#d97706', borderRadius: '50%' }}></span>
-                <span>Bir sonraki bağış tarihiniz: <strong>{new Date(resolvedEligibility.nextEligibleDate).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</strong> (Şu anda kan vermeye uygun değilsiniz)</span>
-              </div>
-            )}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: '600' }}>Son bağışınız</span>
