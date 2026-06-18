@@ -181,5 +181,56 @@ namespace KanYonetim.API.Controllers
                 .ToListAsync();
             return Ok(logs);
         }
+
+        [HttpPut("stocks")]
+        public async Task<IActionResult> UpdateAllStocks([FromBody] Dictionary<string, Dictionary<string, int>> stockUpdates)
+        {
+            if (stockUpdates == null) return BadRequest("Geçersiz veri.");
+
+            var districts = await _context.Districts.ToListAsync();
+            var bloodTypes = await _context.BloodTypes.ToListAsync();
+            var hospitals = await _context.Hospitals.ToListAsync();
+            var stocks = await _context.BloodStocks.ToListAsync();
+
+            foreach (var districtEntry in stockUpdates)
+            {
+                var districtName = districtEntry.Key;
+                var district = districts.FirstOrDefault(d => d.Name == districtName);
+                if (district == null) continue;
+
+                var hospital = hospitals.FirstOrDefault(h => h.DistrictId == district.Id);
+                if (hospital == null) continue;
+
+                foreach (var bloodTypeEntry in districtEntry.Value)
+                {
+                    var bloodTypeName = bloodTypeEntry.Key;
+                    var units = bloodTypeEntry.Value;
+
+                    var bloodType = bloodTypes.FirstOrDefault(bt => bt.Name == bloodTypeName);
+                    if (bloodType == null) continue;
+
+                    var stock = stocks.FirstOrDefault(s => s.HospitalId == hospital.Id && s.BloodTypeId == bloodType.Id);
+                    if (stock == null)
+                    {
+                        stock = new BloodStock
+                        {
+                            HospitalId = hospital.Id,
+                            BloodTypeId = bloodType.Id,
+                            Units = units,
+                            LastUpdated = DateTime.UtcNow
+                        };
+                        _context.BloodStocks.Add(stock);
+                    }
+                    else
+                    {
+                        stock.Units = units;
+                        stock.LastUpdated = DateTime.UtcNow;
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Stok bilgileri veri tabanına başarıyla kaydedildi." });
+        }
     }
 }

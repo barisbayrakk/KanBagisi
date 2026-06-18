@@ -281,6 +281,18 @@ namespace KanYonetim.API.Controllers
                         <p>Talebinizin detaylarını görmek ve cevap yazmak için platforma giriş yapabilirsiniz.</p>
                     ";
                     await _emailService.SendEmailAsync(ticket.User?.Email ?? "", $"Destek Talebi Yanıtı - #{ticket.Id}", userMailBody);
+
+                    var notification = new Notification
+                    {
+                        UserId = ticket.UserId,
+                        Title = $"Destek Talebi Yanıtı - #{ticket.Id}",
+                        Message = "Talebinize yeni bir yanıt geldi.",
+                        Type = "Info",
+                        CreatedAt = DateTime.UtcNow,
+                        IsRead = false
+                    };
+                    _context.Notifications.Add(notification);
+                    await _context.SaveChangesAsync();
                 }
                 else
                 {
@@ -353,6 +365,18 @@ namespace KanYonetim.API.Controllers
                     <p><strong>Yeni Durum:</strong> {statusText}</p>
                 ";
                 await _emailService.SendEmailAsync(ticket.User?.Email ?? "", $"Destek Talebi Durum Güncellemesi - #{ticket.Id}", mailBody);
+
+                var notification = new Notification
+                {
+                    UserId = ticket.UserId,
+                    Title = $"Destek Talebi Durumu - #{ticket.Id}",
+                    Message = $"Talebinizin durumu '{statusText}' olarak güncellendi.",
+                    Type = "Info",
+                    CreatedAt = DateTime.UtcNow,
+                    IsRead = false
+                };
+                _context.Notifications.Add(notification);
+                await _context.SaveChangesAsync();
             }
             catch (Exception ex)
             {

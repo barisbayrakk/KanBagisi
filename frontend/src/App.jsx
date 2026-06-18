@@ -436,6 +436,7 @@ const App = () => {
 
   const navigate = useNavigate()
   const location = useLocation()
+  const [hasNewSupport, setHasNewSupport] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -470,6 +471,37 @@ const App = () => {
   useEffect(() => {
     localStorage.setItem('usersList', JSON.stringify(usersList))
   }, [usersList])
+
+  useEffect(() => {
+    if (user && (user.role === 'Admin' || user.role === 'Yönetici')) {
+      const fetchSupportStatus = async () => {
+        try {
+          const res = await axios.get('/Support/tickets');
+          const tickets = res.data;
+          
+          const lastSeenTs = parseInt(localStorage.getItem('admin_last_seen_support_ts') || '0', 10);
+          
+          if (location.pathname === '/support') {
+             setHasNewSupport(false);
+             const maxTs = Math.max(...tickets.map(t => new Date(t.updatedAt).getTime()), 0);
+             localStorage.setItem('admin_last_seen_support_ts', maxTs.toString());
+          } else {
+             // Admin için: Status "Open" olan ve son gördüğümüzden daha yeni güncellenmiş bir bilet varsa uyarı ver
+             const hasNew = tickets.some(t => t.status === 'Open' && new Date(t.updatedAt).getTime() > lastSeenTs);
+             if (hasNew) {
+               setHasNewSupport(true);
+             }
+          }
+        } catch (err) {
+          console.error("Error fetching support tickets for admin navbar:", err);
+        }
+      };
+
+      fetchSupportStatus();
+      const intervalId = setInterval(fetchSupportStatus, 30000);
+      return () => clearInterval(intervalId);
+    }
+  }, [user, location.pathname]);
 
   const showSidebar = user && user.role !== 'Admin' && user.role !== 'Yönetici' && 
     (location.pathname === '/dashboard' || location.pathname === '/profile' || location.pathname === '/blood-requests' || location.pathname === '/my-requests' || location.pathname === '/support' || location.pathname === '/compatibility-guide');
@@ -510,7 +542,16 @@ const App = () => {
                       <Link to="/" style={{ textDecoration: 'none', fontWeight: '600', color: location.pathname === '/' ? '#991b1b' : '#64748b', fontSize: '0.85rem', transition: 'color 0.2s' }}>Ana Sayfa</Link>
                       <Link to="/logistics" style={{ textDecoration: 'none', fontWeight: '600', color: location.pathname === '/logistics' ? '#991b1b' : '#64748b', fontSize: '0.85rem', transition: 'color 0.2s' }}>Lojistik</Link>
                       <Link to="/dashboard" style={{ textDecoration: 'none', fontWeight: '600', color: location.pathname === '/dashboard' ? '#991b1b' : '#64748b', fontSize: '0.85rem', transition: 'color 0.2s' }}>Yönetim Paneli</Link>
-                      <Link to="/support" style={{ textDecoration: 'none', fontWeight: '600', color: location.pathname === '/support' ? '#991b1b' : '#64748b', fontSize: '0.85rem', transition: 'color 0.2s' }}>Destek Talepleri</Link>
+                      <Link 
+                        to="/support" 
+                        onClick={() => setHasNewSupport(false)}
+                        style={{ position: 'relative', textDecoration: 'none', fontWeight: '600', color: location.pathname === '/support' ? '#991b1b' : '#64748b', fontSize: '0.85rem', transition: 'color 0.2s' }}
+                      >
+                        Destek Talepleri
+                        {hasNewSupport && location.pathname !== '/support' && (
+                          <span style={{ position: 'absolute', top: '-4px', right: '-10px', width: '8px', height: '8px', backgroundColor: '#e11d48', borderRadius: '50%', boxShadow: '0 0 0 2px #ffffff' }}></span>
+                        )}
+                      </Link>
                     </>
                   ) : (
                     <>
@@ -564,7 +605,7 @@ const App = () => {
           </Routes>
         </UserLayout>
       ) : (
-        <main className="flex-grow container" style={{ padding: '3rem 0' }}>
+        <main className="flex-grow container" style={{ padding: location.pathname === '/' ? '0' : '3rem 0' }}>
           <Routes>
             <Route path="/" element={user?.role === 'Admin' ? <AdminDashboard user={user} usersList={usersList} setUsersList={setUsersList} /> : <Home />} />
             <Route path="/login" element={<Login setUser={setUser} usersList={usersList} />} />
@@ -581,7 +622,7 @@ const App = () => {
         </main>
       )}
 
-      {!showSidebar && (
+      {!showSidebar && location.pathname !== '/' && (
         <footer className="glass" style={{ borderTop: 'none', borderLeft: 'none', borderRight: 'none', borderRadius: 0, padding: '3rem 0', marginTop: 'auto' }}>
           <div className="container" style={{ textAlign: 'center' }}>
             <div className="flex justify-center mb-6">
@@ -1922,31 +1963,31 @@ const Register = ({ setUser, usersList, setUsersList }) => {
   }
 
   return (
-    <div className="animate-in" style={{ maxWidth: '800px', margin: '2rem auto' }}>
-      <div style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '3rem', boxShadow: '0 10px 30px rgba(15,23,42,0.3)' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '0.5rem', fontSize: '2rem', fontWeight: '800', color: '#ffffff' }}>Yeni Kayıt</h2>
-        <p style={{ textAlign: 'center', color: '#94a3b8', marginBottom: '2.5rem', fontSize: '0.85rem' }}>Kan bağışçısı topluluğuna eksiksiz katılın</p>
+    <div className="animate-in" style={{ maxWidth: '560px', margin: '1.25rem auto' }}>
+      <div style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 10px 30px rgba(15,23,42,0.3)' }}>
+        <h2 style={{ textAlign: 'center', marginBottom: '0.25rem', fontSize: '1.5rem', fontWeight: '800', color: '#ffffff' }}>Yeni Kayıt</h2>
+        <p style={{ textAlign: 'center', color: '#94a3b8', marginBottom: '1.2rem', fontSize: '0.8rem' }}>Kan bağışçısı topluluğuna eksiksiz katılın</p>
 
-        <form onSubmit={handle} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+        <form onSubmit={handle} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Ad Soyad</label>
-              <input type="text" name="fullName" placeholder="Adınız ve Soyadınız" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.875rem 1rem', borderRadius: '12px', width: '100%' }} />
+              <label style={{ fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.25rem' }}>Ad Soyad</label>
+              <input type="text" name="fullName" placeholder="Adınız ve Soyadınız" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.6rem 0.75rem', borderRadius: '8px', width: '100%', fontSize: '0.85rem' }} />
             </div>
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>T.C. Kimlik Numarası</label>
-              <input type="text" name="tcKimlik" placeholder="11 Haneli TC Kimlik" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.875rem 1rem', borderRadius: '12px', width: '100%' }} />
+              <label style={{ fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.25rem' }}>T.C. Kimlik Numarası</label>
+              <input type="text" name="tcKimlik" placeholder="11 Haneli TC Kimlik" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.6rem 0.75rem', borderRadius: '8px', width: '100%', fontSize: '0.85rem' }} />
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Telefon Numarası</label>
-              <input type="text" name="phone" placeholder="05XX XXX XX XX" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.875rem 1rem', borderRadius: '12px', width: '100%' }} />
+              <label style={{ fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.25rem' }}>Telefon Numarası</label>
+              <input type="text" name="phone" placeholder="05XX XXX XX XX" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.6rem 0.75rem', borderRadius: '8px', width: '100%', fontSize: '0.85rem' }} />
             </div>
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Cinsiyet</label>
-              <select name="gender" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.875rem 1rem', borderRadius: '12px', width: '100%', cursor: 'pointer' }}>
+              <label style={{ fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.25rem' }}>Cinsiyet</label>
+              <select name="gender" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.6rem 0.75rem', borderRadius: '8px', width: '100%', cursor: 'pointer', fontSize: '0.85rem' }}>
                 <option value="" disabled style={{ background: '#1e293b', color: '#ffffff' }}>Seçiniz</option>
                 <option style={{ background: '#1e293b', color: '#ffffff' }}>Erkek</option>
                 <option style={{ background: '#1e293b', color: '#ffffff' }}>Kadın</option>
@@ -1955,42 +1996,42 @@ const Register = ({ setUser, usersList, setUsersList }) => {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Kan Grubu</label>
-              <select name="bloodType" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.875rem 1rem', borderRadius: '12px', width: '100%', cursor: 'pointer' }}>
+              <label style={{ fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.25rem' }}>Kan Grubu</label>
+              <select name="bloodType" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.6rem 0.75rem', borderRadius: '8px', width: '100%', cursor: 'pointer', fontSize: '0.85rem' }}>
                 <option value="" disabled style={{ background: '#1e293b', color: '#ffffff' }}>Seçiniz</option>
                 <option style={{ background: '#1e293b', color: '#ffffff' }}>0+</option><option style={{ background: '#1e293b', color: '#ffffff' }}>0-</option><option style={{ background: '#1e293b', color: '#ffffff' }}>A+</option><option style={{ background: '#1e293b', color: '#ffffff' }}>A-</option>
                 <option style={{ background: '#1e293b', color: '#ffffff' }}>B+</option><option style={{ background: '#1e293b', color: '#ffffff' }}>B-</option><option style={{ background: '#1e293b', color: '#ffffff' }}>AB+</option><option style={{ background: '#1e293b', color: '#ffffff' }}>AB-</option>
               </select>
             </div>
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Görev / Unvan</label>
-              <input type="text" name="title" placeholder="Örn: Kullanıcı, Hemşire, Doktor" defaultValue="Kullanıcı" style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.875rem 1rem', borderRadius: '12px', width: '100%' }} />
+              <label style={{ fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.25rem' }}>Görev / Unvan</label>
+              <input type="text" name="title" placeholder="Örn: Kullanıcı, Hemşire, Doktor" defaultValue="Kullanıcı" style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.6rem 0.75rem', borderRadius: '8px', width: '100%', fontSize: '0.85rem' }} />
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>E-posta Adresi</label>
-              <input type="email" name="email" placeholder="ornek@eposta.com" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.875rem 1rem', borderRadius: '12px', width: '100%' }} />
+              <label style={{ fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.25rem' }}>E-posta Adresi</label>
+              <input type="email" name="email" placeholder="ornek@eposta.com" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.6rem 0.75rem', borderRadius: '8px', width: '100%', fontSize: '0.85rem' }} />
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Şifre</label>
-              <input type="password" name="password" placeholder="••••••••" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.875rem 1rem', borderRadius: '12px', width: '100%' }} />
+              <label style={{ fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.25rem' }}>Şifre</label>
+              <input type="password" name="password" placeholder="••••••••" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.6rem 0.75rem', borderRadius: '8px', width: '100%', fontSize: '0.85rem' }} />
             </div>
             <div>
-              <label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>Şifre Tekrar</label>
-              <input type="password" name="passwordConfirm" placeholder="••••••••" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.875rem 1rem', borderRadius: '12px', width: '100%' }} />
+              <label style={{ fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.25rem' }}>Şifre Tekrar</label>
+              <input type="password" name="passwordConfirm" placeholder="••••••••" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.6rem 0.75rem', borderRadius: '8px', width: '100%', fontSize: '0.85rem' }} />
             </div>
           </div>
 
           <div>
-            <label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>İlçe</label>
-            <select name="district" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.875rem 1rem', borderRadius: '12px', width: '100%', cursor: 'pointer' }}>
+            <label style={{ fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.25rem' }}>İlçe</label>
+            <select name="district" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.6rem 0.75rem', borderRadius: '8px', width: '100%', cursor: 'pointer', fontSize: '0.85rem' }}>
               <option value="" disabled style={{ background: '#1e293b', color: '#ffffff' }}>Seçiniz</option>
               {['Adalar', 'Arnavutköy', 'Ataşehir', 'Avcılar', 'Bağcılar', 'Bahçelievler', 'Bakırköy', 'Başakşehir', 'Bayrampaşa', 'Beşiktaş', 'Beykoz', 'Beylikdüzü', 'Beyoğlu', 'Büyükçekmece', 'Çatalca', 'Çekmeköy', 'Esenler', 'Esenyurt', 'Eyüpsultan', 'Fatih', 'Gaziosmanpaşa', 'Güngören', 'Kadıköy', 'Kağıthane', 'Kartal', 'Küçükçekmece', 'Maltepe', 'Pendik', 'Sancaktepe', 'Sarıyer', 'Silivri', 'Sultanbeyli', 'Sultangazi', 'Şile', 'Şişli', 'Tuzla', 'Ümraniye', 'Üsküdar', 'Zeytinburnu'].map(ilce => (
                 <option key={ilce} value={ilce} style={{ background: '#1e293b', color: '#ffffff' }}>{ilce}</option>
@@ -1998,12 +2039,12 @@ const Register = ({ setUser, usersList, setUsersList }) => {
             </select>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.1rem' }}>
             <input 
               type="checkbox" 
               name="kvkk" 
               id="kvkk" 
-              style={{ width: '1.1rem', height: '1.1rem', accentColor: '#991b1b', background: '#1e293b', border: '1px solid #334155' }} 
+              style={{ width: '1rem', height: '1rem', accentColor: '#991b1b', background: '#1e293b', border: '1px solid #334155' }} 
               onClick={(e) => {
                 if (!kvkkRead) {
                   e.preventDefault();
@@ -2011,24 +2052,24 @@ const Register = ({ setUser, usersList, setUsersList }) => {
                 }
               }}
             />
-            <label htmlFor="kvkk" style={{ fontSize: '0.85rem', color: '#94a3b8', cursor: 'pointer' }}>
+            <label htmlFor="kvkk" style={{ fontSize: '0.8rem', color: '#94a3b8', cursor: 'pointer' }}>
               <a href="#" onClick={(e) => { e.preventDefault(); setShowKvkk(true); }} style={{ color: '#ef4444', textDecoration: 'none', fontWeight: '600' }}>KVKK Aydınlatma Metnini</a> okudum, kişisel verilerimin işlenmesini onaylıyorum.
             </label>
           </div>
 
-          <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ marginTop: '0.1rem', display: 'flex', justifyContent: 'center' }}>
             <ReCAPTCHA
               sitekey="6Lf7OvwsAAAAANynKid02T41fXq7HV5IU_gpzsV8"
               onChange={(token) => setRecaptchaToken(token)}
             />
           </div>
 
-          <div style={{ marginTop: '0.5rem' }}>
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '1rem', borderRadius: '12px', fontSize: '1rem', fontWeight: '700', background: '#991b1b', color: 'white' }}>Kaydı Tamamla</button>
+          <div style={{ marginTop: '0.1rem' }}>
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.7rem', borderRadius: '8px', fontSize: '0.9rem', fontWeight: '700', background: '#991b1b', color: 'white' }}>Kaydı Tamamla</button>
           </div>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.85rem', color: '#94a3b8' }}>
+        <div style={{ textAlign: 'center', marginTop: '1.1rem', fontSize: '0.8rem', color: '#94a3b8' }}>
           Zaten üye misiniz? <Link to="/login" style={{ color: '#ef4444', fontWeight: '600', textDecoration: 'none' }}>Giriş Yapın</Link>
         </div>
       </div>
@@ -2882,9 +2923,33 @@ const AdminDashboard = ({ user, usersList, setUsersList }) => {
     });
   };
 
-  const saveStock = () => {
+  const saveStock = async () => {
+    // Önce localStorage'a kaydet (yerel önbellek)
     localStorage.setItem('stockData', JSON.stringify(stockData));
-    toast.success('İlçe stok bilgileri kaydedildi!');
+
+    // Veri tabanına (pgAdmin/PostgreSQL) gönder
+    try {
+      // Backend'in beklediği format: { "İlçeAdı": { "A+": 10, "B+": 5, ... }, ... }
+      // stockData zaten bu formatta, doğrudan gönderebiliriz
+      const payload = {};
+      Object.keys(stockData).forEach(ilce => {
+        payload[ilce] = {};
+        KAN_GRUPLARI.forEach(kg => {
+          const val = stockData[ilce]?.[kg];
+          payload[ilce][kg] = val === '' || val === undefined ? 0 : parseInt(val, 10);
+        });
+      });
+
+      await axios.put('/Admin/stocks', payload);
+      toast.success('✅ Stok bilgileri veri tabanına (pgAdmin) başarıyla kaydedildi!');
+    } catch (err) {
+      console.error('Stok veri tabanına kaydedilemedi:', err);
+      if (err?.response?.status === 401) {
+        toast.error('⚠️ Yetkisiz erişim: Admin yetkisi gereklidir. Yerel kayıt yapıldı.');
+      } else {
+        toast.error('⚠️ Veri tabanına kaydedilemedi, sadece yerel kayıt yapıldı. Backend çalışıyor mu?');
+      }
+    }
   };
 
   const handleAddDonation = (e) => {

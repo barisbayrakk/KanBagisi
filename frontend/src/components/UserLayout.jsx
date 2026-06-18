@@ -34,6 +34,7 @@ const UserLayout = ({ children, user, setUser }) => {
   const [notifications, setNotifications] = useState([]);
   const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
   const [myRequestsBadgeCount, setMyRequestsBadgeCount] = useState(0);
+  const [supportBadgeCount, setSupportBadgeCount] = useState(0);
 
   useEffect(() => {
     if (!user) return;
@@ -299,6 +300,31 @@ const UserLayout = ({ children, user, setUser }) => {
   }, [showHistoryModal]);
 
   useEffect(() => {
+    if (!user || user.role === 'Admin' || user.role === 'Yönetici') return;
+    const checkSupportUpdates = async () => {
+      try {
+        const res = await axios.get('/Support/tickets');
+        const tickets = res.data;
+        const lastSeen = parseInt(localStorage.getItem('user_last_seen_support_ts') || '0', 10);
+        
+        if (location.pathname === '/support') {
+          const maxTs = Math.max(...tickets.map(t => new Date(t.updatedAt).getTime()), 0);
+          localStorage.setItem('user_last_seen_support_ts', maxTs.toString());
+          setSupportBadgeCount(0);
+        } else {
+          // Eğer bilet üzerinde bizden kaynaklanmayan bir güncelleme varsa (status Open değilse admin işlemi demektir)
+          const hasNew = tickets.some(t => new Date(t.updatedAt).getTime() > lastSeen && t.status !== 'Open');
+          setSupportBadgeCount(hasNew ? 1 : 0);
+        }
+      } catch (e) {}
+    };
+    
+    checkSupportUpdates();
+    const intervalId = setInterval(checkSupportUpdates, 30000);
+    return () => clearInterval(intervalId);
+  }, [user, location.pathname]);
+
+  useEffect(() => {
     const handleOpenHistory = () => setShowHistoryModal(true);
     window.addEventListener('open-donation-history', handleOpenHistory);
     return () => window.removeEventListener('open-donation-history', handleOpenHistory);
@@ -336,7 +362,7 @@ const UserLayout = ({ children, user, setUser }) => {
       icon: <History size={20} /> 
     },
     { name: 'Profilim', path: '/profile', icon: <User size={20} /> },
-    { name: 'Destek Talepleri', path: '/support', icon: <HelpCircle size={20} /> },
+    { name: 'Destek Talepleri', path: '/support', icon: <HelpCircle size={20} />, badge: supportBadgeCount },
     { name: 'Kan Uyum Rehberi', path: '/compatibility-guide', icon: <BookOpen size={20} /> }
   ];
 
