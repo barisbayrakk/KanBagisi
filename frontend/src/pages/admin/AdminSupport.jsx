@@ -393,7 +393,7 @@ const AdminSupport = () => {
             }} className="custom-scrollbar">
               
               {selectedTicket.messages?.map((msg) => {
-                const isAdminReply = msg.senderRole === 'Admin';
+                const isAdminReply = msg.senderRole === 'Admin' || msg.senderRole === 'Yönetici' || msg.senderRole === 'SubAdmin';
                 return (
                   <div 
                     key={msg.id}
@@ -426,7 +426,7 @@ const AdminSupport = () => {
 
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: isAdminReply ? 'flex-end' : 'flex-start', maxWidth: '70%' }}>
                       <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: '600', marginBottom: '0.2rem' }}>
-                        {isAdminReply ? 'Siz (Destek Temsilcisi)' : msg.senderName} • {formatDate(msg.createdAt)}
+                        {isAdminReply ? `${msg.senderName} (Temsilci)` : msg.senderName} • {formatDate(msg.createdAt)}
                       </span>
                       <div style={{
                         padding: '0.75rem 1rem',

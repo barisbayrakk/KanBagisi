@@ -185,6 +185,17 @@ namespace KanYonetim.API.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 
+    public class StockTransfer
+    {
+        public int Id { get; set; }
+        public string SenderDistrict { get; set; } = string.Empty;
+        public string ReceiverDistrict { get; set; } = string.Empty;
+        public string BloodType { get; set; } = string.Empty;
+        public int Amount { get; set; }
+        public double Distance { get; set; }
+        public DateTime TransferDate { get; set; } = DateTime.UtcNow;
+    }
+
     public class UserActivityLog
     {
         public int Id { get; set; }

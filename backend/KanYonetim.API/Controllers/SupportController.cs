@@ -146,7 +146,7 @@ namespace KanYonetim.API.Controllers
                 .Include(t => t.Messages)
                     .ThenInclude(m => m.Sender);
 
-            if (role != "Admin")
+            if (role != "Admin" && role != "SubAdmin")
             {
                 query = query.Where(t => t.UserId == userId);
             }
@@ -196,7 +196,7 @@ namespace KanYonetim.API.Controllers
 
             if (ticket == null) return NotFound("Destek talebi bulunamadı.");
 
-            if (role != "Admin" && ticket.UserId != userId)
+            if (role != "Admin" && role != "SubAdmin" && ticket.UserId != userId)
                 return Forbid();
 
             return Ok(new SupportTicketDto
@@ -236,7 +236,7 @@ namespace KanYonetim.API.Controllers
 
             if (ticket == null) return NotFound("Destek talebi bulunamadı.");
 
-            if (role != "Admin" && ticket.UserId != userId)
+            if (role != "Admin" && role != "SubAdmin" && ticket.UserId != userId)
                 return Forbid();
 
             if (string.IsNullOrWhiteSpace(dto.MessageText))
@@ -252,7 +252,7 @@ namespace KanYonetim.API.Controllers
 
             ticket.UpdatedAt = DateTime.UtcNow;
 
-            if (role == "Admin")
+            if (role == "Admin" || role == "SubAdmin")
             {
                 ticket.Status = "Answered";
             }
@@ -269,7 +269,7 @@ namespace KanYonetim.API.Controllers
             // Send Email Notifications
             try
             {
-                if (role == "Admin")
+                if (role == "Admin" || role == "SubAdmin")
                 {
                     // Email to user telling them admin answered
                     var userMailBody = $@"
@@ -336,7 +336,7 @@ namespace KanYonetim.API.Controllers
 
             if (ticket == null) return NotFound("Destek talebi bulunamadı.");
 
-            if (role != "Admin" && ticket.UserId != userId)
+            if (role != "Admin" && role != "SubAdmin" && ticket.UserId != userId)
                 return Forbid();
 
             var validStatuses = new[] { "Open", "Answered", "Resolved", "Closed" };

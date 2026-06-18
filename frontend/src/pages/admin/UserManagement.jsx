@@ -3,7 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { Users, Search, Shield, UserRound, Mail, Phone, MapPin, User, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
 
-const UserManagement = ({ usersList, setUsersList }) => {
+const UserManagement = ({ user, usersList, setUsersList }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [bloodTypeFilter, setBloodTypeFilter] = useState('Tüm Kan Grupları');
   const [roleFilter, setRoleFilter] = useState('Tüm Roller');
@@ -13,12 +13,19 @@ const UserManagement = ({ usersList, setUsersList }) => {
   const [editModal, setEditModal] = useState(null);
   const [detailModal, setDetailModal] = useState(null);
 
-  const totalUsers = usersList.length;
-  const adminCount = usersList.filter(u => u.role === 'Yönetici').length;
-  const donorCount = usersList.filter(u => u.role !== 'Yönetici').length;
+  const displayUsers = useMemo(() => {
+    if (user?.role === 'SubAdmin') {
+      return usersList.filter(u => u.role !== 'Admin' && u.role !== 'Yönetici');
+    }
+    return usersList;
+  }, [usersList, user]);
+
+  const totalUsers = displayUsers.length;
+  const adminCount = displayUsers.filter(u => u.role === 'Yönetici').length;
+  const donorCount = displayUsers.filter(u => u.role !== 'Yönetici').length;
 
   const filteredUsers = useMemo(() => {
-    return usersList.filter(u => {
+    return displayUsers.filter(u => {
       const matchesSearch = 
         u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
         u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -30,7 +37,7 @@ const UserManagement = ({ usersList, setUsersList }) => {
 
       return matchesSearch && matchesBlood && matchesRole;
     });
-  }, [usersList, searchTerm, bloodTypeFilter, roleFilter]);
+  }, [displayUsers, searchTerm, bloodTypeFilter, roleFilter]);
 
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -135,9 +142,10 @@ const UserManagement = ({ usersList, setUsersList }) => {
                 <option>B+</option><option>B-</option><option>AB+</option><option>AB-</option>
               </select>
               <select value={roleFilter} onChange={e => {setRoleFilter(e.target.value); setCurrentPage(1);}} style={{ padding: '0.75rem 1rem', borderRadius: '12px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '0.9rem', color: '#0f172a', background: '#f8fafc', cursor: 'pointer' }}>
-                <option>Tüm Roller</option>
-                <option>Kullanıcı</option>
-                <option>Yönetici</option>
+                <option value="Tüm Roller">Tüm Roller</option>
+                <option value="Kullanıcı">Kullanıcı</option>
+                <option value="Yönetici">Yönetici</option>
+                <option value="SubAdmin">Yr. Admin</option>
               </select>
             </div>
           </div>
@@ -205,9 +213,13 @@ const UserManagement = ({ usersList, setUsersList }) => {
 
                   {/* Rol */}
                   <td style={{ padding: '1.25rem 2rem' }}>
-                    {u.role === 'Yönetici' ? (
+                    {u.role === 'Admin' || u.role === 'Yönetici' ? (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 1rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '700' }}>
                         <Shield size={14} /> Yönetici
+                      </span>
+                    ) : u.role === 'SubAdmin' ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 1rem', background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '700' }}>
+                        <Shield size={14} /> Yr. Admin
                       </span>
                     ) : (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 1rem', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '700' }}>

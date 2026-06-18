@@ -18,6 +18,7 @@ namespace KanYonetim.API.Data
         public DbSet<Notification> Notifications => Set<Notification>();
         public DbSet<RequestApproval> RequestApprovals => Set<RequestApproval>();
         public DbSet<LogisticsTransfer> LogisticsTransfers => Set<LogisticsTransfer>();
+        public DbSet<StockTransfer> StockTransfers => Set<StockTransfer>();
         public DbSet<UserActivityLog> UserActivityLogs => Set<UserActivityLog>();
         public DbSet<ProfileActivityLog> ProfileActivityLogs => Set<ProfileActivityLog>();
         public DbSet<SupportTicket> SupportTickets => Set<SupportTicket>();

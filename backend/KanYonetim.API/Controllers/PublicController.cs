@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using KanYonetim.API.Data;
+using KanYonetim.API.Models;
 using Microsoft.AspNetCore.Authorization;
 
 namespace KanYonetim.API.Controllers

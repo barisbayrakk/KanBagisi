@@ -385,7 +385,7 @@ const Support = () => {
             }} className="custom-scrollbar">
               
               {selectedTicket.messages?.map((msg) => {
-                const isAdmin = msg.senderRole === 'Admin';
+                const isAdmin = msg.senderRole === 'Admin' || msg.senderRole === 'Yönetici' || msg.senderRole === 'SubAdmin';
                 return (
                   <div 
                     key={msg.id}

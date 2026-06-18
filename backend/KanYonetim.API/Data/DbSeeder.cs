@@ -31,6 +31,21 @@ namespace KanYonetim.API.Data
                 context.SaveChanges();
             }
 
+            // Seed SubAdmins if not exists
+            if (!context.Users.Any(u => u.Role == "SubAdmin"))
+            {
+                var subAdmins = new List<User>
+                {
+                    new User { FullName = "Yardımcı Admin 1", Email = "yradmin@hotmail.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Sifre123!"), Tc = "10000000001", Phone = "05000000001", Gender = "Erkek", BloodTypeId = 1, DistrictId = 20, Role = "SubAdmin", IsEmailVerified = true, CreatedAt = DateTime.UtcNow },
+                    new User { FullName = "Yardımcı Admin 2", Email = "yradmin2@hotmail.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Sifre123!"), Tc = "10000000002", Phone = "05000000002", Gender = "Kadın", BloodTypeId = 2, DistrictId = 20, Role = "SubAdmin", IsEmailVerified = true, CreatedAt = DateTime.UtcNow },
+                    new User { FullName = "Yardımcı Admin 3", Email = "yradmin3@hotmail.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Sifre123!"), Tc = "10000000003", Phone = "05000000003", Gender = "Erkek", BloodTypeId = 3, DistrictId = 20, Role = "SubAdmin", IsEmailVerified = true, CreatedAt = DateTime.UtcNow },
+                    new User { FullName = "Yardımcı Admin 4", Email = "yradmin4@hotmail.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Sifre123!"), Tc = "10000000004", Phone = "05000000004", Gender = "Kadın", BloodTypeId = 4, DistrictId = 20, Role = "SubAdmin", IsEmailVerified = true, CreatedAt = DateTime.UtcNow },
+                    new User { FullName = "Yardımcı Admin 5", Email = "yradmin5@hotmail.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("Sifre123!"), Tc = "10000000005", Phone = "05000000005", Gender = "Erkek", BloodTypeId = 5, DistrictId = 20, Role = "SubAdmin", IsEmailVerified = true, CreatedAt = DateTime.UtcNow }
+                };
+                context.Users.AddRange(subAdmins);
+                context.SaveChanges();
+            }
+
             // Seed Donors if less than 10 users exist
             if (context.Users.Count(u => u.Role == "Donor") < 10)
             {
@@ -266,6 +281,101 @@ namespace KanYonetim.API.Data
                         context.SaveChanges();
                     }
                 }
+            }
+            // Seed missing hospitals for all districts and populate BloodStock
+            var allDistricts = context.Districts.ToList();
+            var bloodTypes = context.BloodTypes.ToList();
+            if (context.BloodStocks.Count() == 0 && allDistricts.Any() && bloodTypes.Any())
+            {
+                // Ensure every district has at least one hospital
+                var existingHospitals = context.Hospitals.ToList();
+                foreach (var dist in allDistricts)
+                {
+                    if (!existingHospitals.Any(h => h.DistrictId == dist.Id))
+                    {
+                        var newHospital = new Hospital 
+                        { 
+                            Name = $"{dist.Name} İlçe Devlet Hastanesi", 
+                            DistrictId = dist.Id, 
+                            Address = dist.Name, 
+                            Phone = "0212 000 00 00" 
+                        };
+                        context.Hospitals.Add(newHospital);
+                        existingHospitals.Add(newHospital);
+                    }
+                }
+                context.SaveChanges();
+
+                // Seed Data Map
+                var seedData = new Dictionary<string, Dictionary<string, int>>
+                {
+                    { "Adalar", new Dictionary<string, int> { { "0+", 2 }, { "0-", 1 }, { "A+", 3 }, { "A-", 0 }, { "B+", 1 }, { "B-", 0 }, { "AB+", 1 }, { "AB-", 0 } } },
+                    { "Arnavutköy", new Dictionary<string, int> { { "0+", 4 }, { "0-", 2 }, { "A+", 3 }, { "A-", 1 }, { "B+", 5 }, { "B-", 0 }, { "AB+", 2 }, { "AB-", 0 } } },
+                    { "Ataşehir", new Dictionary<string, int> { { "0+", 15 }, { "0-", 6 }, { "A+", 22 }, { "A-", 5 }, { "B+", 12 }, { "B-", 3 }, { "AB+", 8 }, { "AB-", 2 } } },
+                    { "Avcılar", new Dictionary<string, int> { { "0+", 8 }, { "0-", 3 }, { "A+", 12 }, { "A-", 2 }, { "B+", 7 }, { "B-", 1 }, { "AB+", 4 }, { "AB-", 0 } } },
+                    { "Bağcılar", new Dictionary<string, int> { { "0+", 25 }, { "0-", 10 }, { "A+", 32 }, { "A-", 8 }, { "B+", 18 }, { "B-", 4 }, { "AB+", 11 }, { "AB-", 3 } } },
+                    { "Bahçelievler", new Dictionary<string, int> { { "0+", 18 }, { "0-", 7 }, { "A+", 24 }, { "A-", 6 }, { "B+", 14 }, { "B-", 3 }, { "AB+", 9 }, { "AB-", 2 } } },
+                    { "Bakırköy", new Dictionary<string, int> { { "0+", 30 }, { "0-", 12 }, { "A+", 40 }, { "A-", 10 }, { "B+", 25 }, { "B-", 5 }, { "AB+", 15 }, { "AB-", 4 } } },
+                    { "Başakşehir", new Dictionary<string, int> { { "0+", 12 }, { "0-", 4 }, { "A+", 18 }, { "A-", 3 }, { "B+", 10 }, { "B-", 2 }, { "AB+", 6 }, { "AB-", 1 } } },
+                    { "Bayrampaşa", new Dictionary<string, int> { { "0+", 9 }, { "0-", 2 }, { "A+", 14 }, { "A-", 3 }, { "B+", 8 }, { "B-", 1 }, { "AB+", 5 }, { "AB-", 0 } } },
+                    { "Beşiktaş", new Dictionary<string, int> { { "0+", 45 }, { "0-", 18 }, { "A+", 52 }, { "A-", 15 }, { "B+", 35 }, { "B-", 8 }, { "AB+", 22 }, { "AB-", 6 } } },
+                    { "Beykoz", new Dictionary<string, int> { { "0+", 5 }, { "0-", 2 }, { "A+", 8 }, { "A-", 1 }, { "B+", 4 }, { "B-", 0 }, { "AB+", 2 }, { "AB-", 0 } } },
+                    { "Beylikdüzü", new Dictionary<string, int> { { "0+", 14 }, { "0-", 5 }, { "A+", 19 }, { "A-", 4 }, { "B+", 11 }, { "B-", 2 }, { "AB+", 7 }, { "AB-", 1 } } },
+                    { "Beyoğlu", new Dictionary<string, int> { { "0+", 22 }, { "0-", 8 }, { "A+", 28 }, { "A-", 7 }, { "B+", 16 }, { "B-", 4 }, { "AB+", 10 }, { "AB-", 3 } } },
+                    { "Büyükçekmece", new Dictionary<string, int> { { "0+", 6 }, { "0-", 2 }, { "A+", 9 }, { "A-", 1 }, { "B+", 5 }, { "B-", 0 }, { "AB+", 3 }, { "AB-", 0 } } },
+                    { "Çatalca", new Dictionary<string, int> { { "0+", 2 }, { "0-", 0 }, { "A+", 4 }, { "A-", 0 }, { "B+", 2 }, { "B-", 0 }, { "AB+", 1 }, { "AB-", 0 } } },
+                    { "Çekmeköy", new Dictionary<string, int> { { "0+", 7 }, { "0-", 2 }, { "A+", 11 }, { "A-", 2 }, { "B+", 6 }, { "B-", 1 }, { "AB+", 3 }, { "AB-", 0 } } },
+                    { "Esenler", new Dictionary<string, int> { { "0+", 13 }, { "0-", 4 }, { "A+", 17 }, { "A-", 3 }, { "B+", 9 }, { "B-", 2 }, { "AB+", 5 }, { "AB-", 1 } } },
+                    { "Esenyurt", new Dictionary<string, int> { { "0+", 20 }, { "0-", 8 }, { "A+", 26 }, { "A-", 6 }, { "B+", 15 }, { "B-", 3 }, { "AB+", 9 }, { "AB-", 2 } } },
+                    { "Eyüpsultan", new Dictionary<string, int> { { "0+", 11 }, { "0-", 3 }, { "A+", 16 }, { "A-", 4 }, { "B+", 9 }, { "B-", 2 }, { "AB+", 6 }, { "AB-", 1 } } },
+                    { "Fatih", new Dictionary<string, int> { { "0+", 40 }, { "0-", 15 }, { "A+", 48 }, { "A-", 12 }, { "B+", 30 }, { "B-", 7 }, { "AB+", 18 }, { "AB-", 5 } } },
+                    { "Gaziosmanpaşa", new Dictionary<string, int> { { "0+", 10 }, { "0-", 3 }, { "A+", 15 }, { "A-", 3 }, { "B+", 8 }, { "B-", 2 }, { "AB+", 5 }, { "AB-", 1 } } },
+                    { "Güngören", new Dictionary<string, int> { { "0+", 8 }, { "0-", 2 }, { "A+", 13 }, { "A-", 2 }, { "B+", 7 }, { "B-", 1 }, { "AB+", 4 }, { "AB-", 0 } } },
+                    { "Kadıköy", new Dictionary<string, int> { { "0+", 50 }, { "0-", 20 }, { "A+", 60 }, { "A-", 18 }, { "B+", 40 }, { "B-", 10 }, { "AB+", 25 }, { "AB-", 8 } } },
+                    { "Kağıthane", new Dictionary<string, int> { { "0+", 12 }, { "0-", 4 }, { "A+", 17 }, { "A-", 4 }, { "B+", 10 }, { "B-", 2 }, { "AB+", 6 }, { "AB-", 1 } } },
+                    { "Kartal", new Dictionary<string, int> { { "0+", 28 }, { "0-", 11 }, { "A+", 35 }, { "A-", 9 }, { "B+", 22 }, { "B-", 5 }, { "AB+", 13 }, { "AB-", 4 } } },
+                    { "Küçükçekmece", new Dictionary<string, int> { { "0+", 16 }, { "0-", 6 }, { "A+", 22 }, { "A-", 5 }, { "B+", 13 }, { "B-", 3 }, { "AB+", 8 }, { "AB-", 2 } } },
+                    { "Maltepe", new Dictionary<string, int> { { "0+", 24 }, { "0-", 9 }, { "A+", 30 }, { "A-", 8 }, { "B+", 19 }, { "B-", 4 }, { "AB+", 11 }, { "AB-", 3 } } },
+                    { "Pendik", new Dictionary<string, int> { { "0+", 32 }, { "0-", 13 }, { "A+", 42 }, { "A-", 11 }, { "B+", 26 }, { "B-", 6 }, { "AB+", 16 }, { "AB-", 4 } } },
+                    { "Sancaktepe", new Dictionary<string, int> { { "0+", 9 }, { "0-", 3 }, { "A+", 13 }, { "A-", 2 }, { "B+", 8 }, { "B-", 1 }, { "AB+", 5 }, { "AB-", 0 } } },
+                    { "Sarıyer", new Dictionary<string, int> { { "0+", 18 }, { "0-", 7 }, { "A+", 23 }, { "A-", 6 }, { "B+", 14 }, { "B-", 3 }, { "AB+", 9 }, { "AB-", 2 } } },
+                    { "Silivri", new Dictionary<string, int> { { "0+", 4 }, { "0-", 1 }, { "A+", 6 }, { "A-", 1 }, { "B+", 3 }, { "B-", 0 }, { "AB+", 2 }, { "AB-", 0 } } },
+                    { "Sultanbeyli", new Dictionary<string, int> { { "0+", 8 }, { "0-", 2 }, { "A+", 11 }, { "A-", 2 }, { "B+", 6 }, { "B-", 1 }, { "AB+", 4 }, { "AB-", 0 } } },
+                    { "Sultangazi", new Dictionary<string, int> { { "0+", 11 }, { "0-", 4 }, { "A+", 15 }, { "A-", 3 }, { "B+", 9 }, { "B-", 2 }, { "AB+", 5 }, { "AB-", 1 } } },
+                    { "Şile", new Dictionary<string, int> { { "0+", 1 }, { "0-", 0 }, { "A+", 2 }, { "A-", 0 }, { "B+", 1 }, { "B-", 0 }, { "AB+", 0 }, { "AB-", 0 } } },
+                    { "Şişli", new Dictionary<string, int> { { "0+", 42 }, { "0-", 16 }, { "A+", 50 }, { "A-", 14 }, { "B+", 32 }, { "B-", 8 }, { "AB+", 20 }, { "AB-", 5 } } },
+                    { "Tuzla", new Dictionary<string, int> { { "0+", 12 }, { "0-", 4 }, { "A+", 16 }, { "A-", 4 }, { "B+", 10 }, { "B-", 2 }, { "AB+", 6 }, { "AB-", 1 } } },
+                    { "Ümraniye", new Dictionary<string, int> { { "0+", 30 }, { "0-", 12 }, { "A+", 38 }, { "A-", 10 }, { "B+", 24 }, { "B-", 5 }, { "AB+", 15 }, { "AB-", 4 } } },
+                    { "Üsküdar", new Dictionary<string, int> { { "0+", 38 }, { "0-", 15 }, { "A+", 46 }, { "A-", 12 }, { "B+", 29 }, { "B-", 7 }, { "AB+", 17 }, { "AB-", 4 } } },
+                    { "Zeytinburnu", new Dictionary<string, int> { { "0+", 14 }, { "0-", 5 }, { "A+", 19 }, { "A-", 4 }, { "B+", 11 }, { "B-", 2 }, { "AB+", 7 }, { "AB-", 1 } } }
+                };
+
+                foreach (var distName in seedData.Keys)
+                {
+                    var district = allDistricts.FirstOrDefault(d => d.Name == distName);
+                    if (district != null)
+                    {
+                        var hosp = existingHospitals.FirstOrDefault(h => h.DistrictId == district.Id);
+                        if (hosp != null)
+                        {
+                            foreach (var btData in seedData[distName])
+                            {
+                                var bType = bloodTypes.FirstOrDefault(b => b.Name == btData.Key);
+                                if (bType != null)
+                                {
+                                    context.BloodStocks.Add(new BloodStock
+                                    {
+                                        HospitalId = hosp.Id,
+                                        BloodTypeId = bType.Id,
+                                        Units = btData.Value,
+                                        LastUpdated = DateTime.UtcNow
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+                context.SaveChanges();
             }
         }
 

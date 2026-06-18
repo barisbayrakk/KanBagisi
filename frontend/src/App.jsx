@@ -25,11 +25,22 @@ axios.defaults.baseURL = 'http://localhost:5090/api';
 
 const getInitialStockData = () => {
   try {
+    if (localStorage.getItem('stock_v3') !== 'true') {
+      localStorage.removeItem('stockData');
+      localStorage.setItem('stock_v3', 'true');
+    }
     const data = localStorage.getItem('stockData');
     if (data) {
       const parsed = JSON.parse(data);
       if (parsed && Object.keys(parsed).length > 0) {
-        return parsed;
+        // Only return if it's not all zeros
+        let total = 0;
+        for (const dist in parsed) {
+          for (const kg in parsed[dist]) {
+            total += parsed[dist][kg];
+          }
+        }
+        if (total > 0) return parsed;
       }
     }
   } catch (e) {}
@@ -444,7 +455,7 @@ const App = () => {
       if (user.token) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
       }
-      if (user.role === 'Admin') {
+      if (user.role === 'Admin' || user.role === 'Yönetici' || user.role === 'SubAdmin') {
         axios.get('/Admin/users')
           .then(res => {
             const mappedUsers = res.data.map(u => ({
@@ -454,7 +465,7 @@ const App = () => {
               tc: u.tc,
               phone: u.phone,
               gender: u.gender || '',
-              role: u.role === 'Admin' ? 'Yönetici' : 'Kullanıcı',
+              role: u.role === 'Admin' || u.role === 'Yönetici' ? 'Yönetici' : u.role === 'SubAdmin' ? 'SubAdmin' : 'Kullanıcı',
               bloodType: u.bloodTypeName,
               district: u.districtName
             }));
@@ -473,7 +484,10 @@ const App = () => {
   }, [usersList])
 
   useEffect(() => {
-    if (user && (user.role === 'Admin' || user.role === 'Yönetici')) {
+    // Seed SubAdmins temporarily
+    axios.get('/Auth/force-seed-subadmin').catch(() => {});
+
+    if (user && (user.role === 'Admin' || user.role === 'Yönetici' || user.role === 'SubAdmin')) {
       const fetchSupportStatus = async () => {
         try {
           const res = await axios.get('/Support/tickets');
@@ -503,7 +517,7 @@ const App = () => {
     }
   }, [user, location.pathname]);
 
-  const showSidebar = user && user.role !== 'Admin' && user.role !== 'Yönetici' && 
+  const showSidebar = user && user.role !== 'Admin' && user.role !== 'Yönetici' && user.role !== 'SubAdmin' && 
     (location.pathname === '/dashboard' || location.pathname === '/profile' || location.pathname === '/blood-requests' || location.pathname === '/my-requests' || location.pathname === '/support' || location.pathname === '/compatibility-guide');
 
   return (
@@ -524,7 +538,7 @@ const App = () => {
         <nav className="glass sticky top-0 z-50">
           <div className="container" style={{ height: '72px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             {/* Sol: Logo ve İsim */}
-            <Link to="/" className="flex items-center no-underline hover:opacity-90 transition-opacity" style={{ gap: '0.875rem', textDecoration: 'none' }}>
+            <Link to={user?.role === 'SubAdmin' ? "/dashboard" : "/"} className="flex items-center no-underline hover:opacity-90 transition-opacity" style={{ gap: '0.875rem', textDecoration: 'none' }}>
               <div className="bg-red-600 w-11 h-11 rounded-2xl flex items-center justify-center shadow-md">
                 <Heart size={22} className="text-white fill-white" />
               </div>
@@ -537,10 +551,25 @@ const App = () => {
               {/* Menü Linkleri */}
               {user && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                  {user.role === 'Admin' ? (
+                  {user.role === 'Admin' || user.role === 'Yönetici' ? (
                     <>
                       <Link to="/" style={{ textDecoration: 'none', fontWeight: '600', color: location.pathname === '/' ? '#991b1b' : '#64748b', fontSize: '0.85rem', transition: 'color 0.2s' }}>Ana Sayfa</Link>
                       <Link to="/logistics" style={{ textDecoration: 'none', fontWeight: '600', color: location.pathname === '/logistics' ? '#991b1b' : '#64748b', fontSize: '0.85rem', transition: 'color 0.2s' }}>Lojistik</Link>
+                      <Link to="/dashboard" style={{ textDecoration: 'none', fontWeight: '600', color: location.pathname === '/dashboard' ? '#991b1b' : '#64748b', fontSize: '0.85rem', transition: 'color 0.2s' }}>Yönetim Paneli</Link>
+                      <Link 
+                        to="/support" 
+                        onClick={() => setHasNewSupport(false)}
+                        style={{ position: 'relative', textDecoration: 'none', fontWeight: '600', color: location.pathname === '/support' ? '#991b1b' : '#64748b', fontSize: '0.85rem', transition: 'color 0.2s' }}
+                      >
+                        Destek Talepleri
+                        {hasNewSupport && location.pathname !== '/support' && (
+                          <span style={{ position: 'absolute', top: '-4px', right: '-10px', width: '8px', height: '8px', backgroundColor: '#e11d48', borderRadius: '50%', boxShadow: '0 0 0 2px #ffffff' }}></span>
+                        )}
+                      </Link>
+                    </>
+                  ) : user.role === 'SubAdmin' ? (
+                    <>
+                      <Link to="/" style={{ textDecoration: 'none', fontWeight: '600', color: location.pathname === '/' ? '#991b1b' : '#64748b', fontSize: '0.85rem', transition: 'color 0.2s' }}>Yeni Form</Link>
                       <Link to="/dashboard" style={{ textDecoration: 'none', fontWeight: '600', color: location.pathname === '/dashboard' ? '#991b1b' : '#64748b', fontSize: '0.85rem', transition: 'color 0.2s' }}>Yönetim Paneli</Link>
                       <Link 
                         to="/support" 
@@ -570,7 +599,7 @@ const App = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '1px solid #e2e8f0', paddingLeft: '2rem' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                     <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#1e293b', lineHeight: '1.2' }}>{user.fullName}</span>
-                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '500' }}>{user.role === 'Admin' ? 'Yönetici' : 'Bağışçı'}</span>
+                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '500' }}>{user.role === 'Admin' || user.role === 'Yönetici' ? 'Yönetici' : user.role === 'SubAdmin' ? 'Yardımcı Admin' : 'Bağışçı'}</span>
                   </div>
                   <button
                     onClick={() => { setUser(null); navigate('/'); toast.success('Güvenli çıkış yapıldı'); }}
@@ -607,7 +636,7 @@ const App = () => {
       ) : (
         <main className="flex-grow container" style={{ padding: location.pathname === '/' ? '0' : '3rem 0' }}>
           <Routes>
-            <Route path="/" element={user?.role === 'Admin' ? <AdminDashboard user={user} usersList={usersList} setUsersList={setUsersList} /> : <Home />} />
+            <Route path="/" element={(user?.role === 'Admin' || user?.role === 'Yönetici' || user?.role === 'SubAdmin') ? <AdminDashboard user={user} usersList={usersList} setUsersList={setUsersList} /> : <Home />} />
             <Route path="/login" element={<Login setUser={setUser} usersList={usersList} />} />
             <Route path="/register" element={<Register setUser={setUser} usersList={usersList} setUsersList={setUsersList} />} />
             <Route path="/dashboard" element={<Dashboard user={user} usersList={usersList} setUsersList={setUsersList} />} />
@@ -616,7 +645,7 @@ const App = () => {
             <Route path="/blood-requests" element={user ? <KanTalepleri user={user} /> : <Home />} />
             <Route path="/my-requests" element={user ? <MyRequests user={user} /> : <Home />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/support" element={user?.role === 'Admin' ? <AdminSupport /> : <Home />} />
+            <Route path="/support" element={(user?.role === 'Admin' || user?.role === 'Yönetici' || user?.role === 'SubAdmin') ? <AdminSupport /> : <Home />} />
             <Route path="/compatibility-guide" element={user ? <CompatibilityGuide /> : <Home />} />
           </Routes>
         </main>
@@ -2231,52 +2260,59 @@ const Dashboard = ({ user, usersList, setUsersList }) => {
 
   return (
     <div className="animate-in">
-      {user.role === 'Admin' || user.role === 'Yönetici' ? (
+      {user.role === 'Admin' || user.role === 'Yönetici' || user.role === 'SubAdmin' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
           {/* Admin Navigation Tabs */}
           <div style={{ display: 'flex', gap: '0.4rem', background: '#ffffff', padding: '0.75rem', borderRadius: '10px', flexWrap: 'wrap', justifyContent: 'center', border: '1px solid rgba(0,0,0,0.03)', boxShadow: '0 10px 40px rgba(0,0,0,0.02)', overflowX: 'auto' }}>
-            <button 
-              onClick={() => setActiveAdminTab('overview')} 
-              style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeAdminTab === 'overview' ? '#991b1b' : 'transparent', color: activeAdminTab === 'overview' ? '#ffffff' : '#475569', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
-              <LayoutDashboard size={18} /> Sistem Özeti
-            </button>
+
+              <button 
+                onClick={() => setActiveAdminTab('overview')} 
+                style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeAdminTab === 'overview' ? '#991b1b' : 'transparent', color: activeAdminTab === 'overview' ? '#ffffff' : '#475569', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
+                <LayoutDashboard size={18} /> Sistem Özeti
+              </button>
             <button 
               onClick={() => setActiveAdminTab('users')} 
               style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeAdminTab === 'users' ? '#991b1b' : 'transparent', color: activeAdminTab === 'users' ? '#ffffff' : '#475569', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
               <Users size={18} /> Kullanıcı Yönetimi
             </button>
-            <button 
-              onClick={() => setActiveAdminTab('logs')} 
-              style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeAdminTab === 'logs' ? '#991b1b' : 'transparent', color: activeAdminTab === 'logs' ? '#ffffff' : '#475569', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
-              <Activity size={18} /> Sistem Logları
-            </button>
+            {(user.role === 'Admin' || user.role === 'Yönetici') && (
+              <button 
+                onClick={() => setActiveAdminTab('logs')} 
+                style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeAdminTab === 'logs' ? '#991b1b' : 'transparent', color: activeAdminTab === 'logs' ? '#ffffff' : '#475569', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
+                <Activity size={18} /> Sistem Logları
+              </button>
+            )}
             <button 
               onClick={() => setActiveAdminTab('approvals')} 
               style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeAdminTab === 'approvals' ? '#991b1b' : 'transparent', color: activeAdminTab === 'approvals' ? '#ffffff' : '#475569', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
               <CheckCircle size={18} /> Onay Merkezi
             </button>
-            <button 
-              onClick={() => setActiveAdminTab('logistics')} 
-              style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeAdminTab === 'logistics' ? '#991b1b' : 'transparent', color: activeAdminTab === 'logistics' ? '#ffffff' : '#475569', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
-              <Truck size={18} /> Lojistik
-            </button>
-            <button 
-              onClick={() => setActiveAdminTab('security')} 
-              style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeAdminTab === 'security' ? '#991b1b' : 'transparent', color: activeAdminTab === 'security' ? '#ffffff' : '#475569', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
-              <Shield size={18} /> Güvenlik Paneli
-            </button>
-            <button 
-              onClick={() => setActiveAdminTab('livetracking')} 
-              style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeAdminTab === 'livetracking' ? '#991b1b' : 'transparent', color: activeAdminTab === 'livetracking' ? '#ffffff' : '#475569', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
-              <MapPin size={18} /> Canlı Takip & Harita
-            </button>
+            {(user.role === 'Admin' || user.role === 'Yönetici') && (
+              <>
+                <button 
+                  onClick={() => setActiveAdminTab('logistics')} 
+                  style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeAdminTab === 'logistics' ? '#991b1b' : 'transparent', color: activeAdminTab === 'logistics' ? '#ffffff' : '#475569', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
+                  <Truck size={18} /> Lojistik
+                </button>
+                <button 
+                  onClick={() => setActiveAdminTab('security')} 
+                  style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeAdminTab === 'security' ? '#991b1b' : 'transparent', color: activeAdminTab === 'security' ? '#ffffff' : '#475569', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
+                  <Shield size={18} /> Güvenlik Paneli
+                </button>
+                <button 
+                  onClick={() => setActiveAdminTab('livetracking')} 
+                  style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeAdminTab === 'livetracking' ? '#991b1b' : 'transparent', color: activeAdminTab === 'livetracking' ? '#ffffff' : '#475569', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
+                  <MapPin size={18} /> Canlı Takip & Harita
+                </button>
+              </>
+            )}
           </div>
 
           {/* Render Active Tab */}
           <div className="animate-in">
             {activeAdminTab === 'overview' && <AdminDashboardOverview />}
-            {activeAdminTab === 'users' && <UserManagement usersList={usersList} setUsersList={setUsersList} />}
+            {activeAdminTab === 'users' && <UserManagement user={user} usersList={usersList} setUsersList={setUsersList} />}
             {activeAdminTab === 'logs' && <AuditLogs />}
             {activeAdminTab === 'approvals' && <RequestApprovals />}
             {activeAdminTab === 'logistics' && <Logistics />}
@@ -2661,31 +2697,30 @@ const LogisticsDashboard = () => {
   // Sort by distance (closest first)
   suggestions.sort((a, b) => (a.distance ?? 9999) - (b.distance ?? 9999));
 
-  const handleApprove = (s) => {
-    const updated = { ...stockData };
-    // deduct from sender
-    const senderCurrent = updated[s.sender]?.[s.kg] || 0;
-    if (!updated[s.sender]) updated[s.sender] = {};
-    updated[s.sender][s.kg] = Math.max(0, senderCurrent - s.amount);
-    // add to receiver
-    const receiverCurrent = updated[s.receiver]?.[s.kg] || 0;
-    if (!updated[s.receiver]) updated[s.receiver] = {};
-    updated[s.receiver][s.kg] = receiverCurrent + s.amount;
+  const handleApprove = async (s) => {
+    try {
+      await axios.post('/Admin/stock-transfers', {
+        sender: s.sender,
+        receiver: s.receiver,
+        kg: s.kg,
+        amount: s.amount,
+        distance: s.distance || 0
+      });
 
-    localStorage.setItem('stockData', JSON.stringify(updated));
-    setStockData(updated);
+      // Refresh data
+      const [stocksRes, transfersRes] = await Promise.all([
+        axios.get('/Admin/stocks'),
+        axios.get('/Admin/stock-transfers')
+      ]);
+      setStockData(stocksRes.data);
+      setCompletedTransfers(transfersRes.data);
 
-    const newTransfer = {
-      id: Date.now(),
-      ...s,
-      date: new Date().toLocaleDateString('tr-TR'),
-      time: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
-    };
-    const updatedTransfers = [newTransfer, ...completedTransfers].slice(0, 20);
-    localStorage.setItem('completedTransfers', JSON.stringify(updatedTransfers));
-    setCompletedTransfers(updatedTransfers);
-    setDismissedSuggestions(prev => [...prev, s.id]);
-    toast.success(`✅ Transfer onaylandı! ${s.sender} → ${s.receiver}: ${s.amount} Ünite ${s.kg}`, { duration: 4000 });
+      setDismissedSuggestions(prev => [...prev, s.id]);
+      toast.success(`✅ Transfer onaylandı! ${s.sender} → ${s.receiver}: ${s.amount} Ünite ${s.kg}`, { duration: 4000 });
+    } catch (err) {
+      console.error(err);
+      toast.error('Transfer işlemi başarısız oldu.');
+    }
   };
 
   const handleDismiss = (id) => {
@@ -2693,13 +2728,16 @@ const LogisticsDashboard = () => {
     toast(`Öneri reddedildi.`, { icon: '🚫', duration: 2000 });
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     try {
-      const fresh = getInitialStockData();
-      setStockData(fresh);
+      const res = await axios.get('/Admin/stocks');
+      setStockData(res.data);
       setDismissedSuggestions([]);
       toast.success('Stok verileri yenilendi!');
-    } catch { }
+    } catch (err) {
+      console.error(err);
+      toast.error('Stok verileri alınamadı.');
+    }
   };
 
   return (
@@ -2850,9 +2888,11 @@ const AdminDashboard = ({ user, usersList, setUsersList }) => {
   const [donationList, setDonationList] = useState(() => {
     try { return JSON.parse(localStorage.getItem('donationList') || '[]'); } catch { return []; }
   });
-  const [stockData, setStockData] = useState(() => {
-    return getInitialStockData();
-  });
+  const [stockData, setStockData] = useState({});
+
+  useEffect(() => {
+    axios.get('/Admin/stocks').then(res => setStockData(res.data)).catch(console.error);
+  }, []);
 
   const [donorName, setDonorName] = useState('');
   const [donorTc, setDonorTc] = useState('');
@@ -2898,6 +2938,15 @@ const AdminDashboard = ({ user, usersList, setUsersList }) => {
     return val !== undefined ? val : 0;
   };
 
+  const updateBackendStock = async (ilce, kg, units) => {
+    try {
+      await axios.post('/Admin/stocks/update', { district: ilce, bloodType: kg, units: units });
+    } catch (err) {
+      console.error(err);
+      toast.error('Stok güncellenirken hata oluştu.');
+    }
+  };
+
   const setExactStock = (ilce, kg, val) => {
     setStockData(prev => {
       const ilceData = { ...(prev[ilce] || {}) };
@@ -2906,6 +2955,7 @@ const AdminDashboard = ({ user, usersList, setUsersList }) => {
     });
     const numVal = val === '' ? 0 : parseInt(val, 10);
     if (!isNaN(numVal)) {
+      updateBackendStock(ilce, kg, numVal);
       setTimeout(() => triggerAutoAlert(ilce, kg, numVal), 0);
     }
   };
@@ -2917,6 +2967,7 @@ const AdminDashboard = ({ user, usersList, setUsersList }) => {
       const newVal = Math.max(0, current + delta);
       ilceData[kg] = newVal;
 
+      updateBackendStock(ilce, kg, newVal);
       setTimeout(() => triggerAutoAlert(ilce, kg, newVal), 0);
 
       return { ...prev, [ilce]: ilceData };
@@ -3063,6 +3114,61 @@ const AdminDashboard = ({ user, usersList, setUsersList }) => {
   const inputStyle = { background: '#f8fafc', border: '1px solid #e2e8f0', padding: '0.75rem 1rem', borderRadius: '10px', width: '100%', fontSize: '0.85rem', outline: 'none', color: '#0f172a' };
   const darkLabelStyle = { fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.4rem' };
   const darkInputStyle = { background: '#1e293b', border: '1px solid #334155', padding: '0.75rem 1rem', borderRadius: '10px', width: '100%', fontSize: '0.85rem', outline: 'none', color: '#ffffff' };
+
+  if (user?.role === 'SubAdmin') {
+    return (
+      <div className="admin-dashboard animate-in" style={{ paddingBottom: '4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 200px)' }}>
+        
+        {/* Modern Form Container */}
+        <div style={{ width: '100%', maxWidth: '600px', background: '#ffffff', borderRadius: '20px', padding: '2.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.04)' }}>
+          
+          {/* Header & Hospital Selection */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: '1px solid #f1f5f9' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ background: '#eff6ff', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Activity size={24} style={{ color: '#2563eb' }} />
+              </div>
+              <div>
+                <h2 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#0f172a', margin: 0 }}>{getHastane(selectedIlce)}</h2>
+                <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0.2rem 0 0 0' }}>{selectedIlce} Bölgesi</p>
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+              <select value={selectedIlce} onChange={e => setSelectedIlce(e.target.value)} style={{ ...inputStyle, minWidth: '140px', background: '#f8fafc', fontWeight: '600', cursor: 'pointer', padding: '0.5rem 0.8rem', borderRadius: '8px' }}>
+                {ISTANBUL_ILCELER.map(i => <option key={i}>{i}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', margin: 0 }}>
+            <UserRound size={18} style={{ color: '#2563eb' }} />
+            Yeni Bağışçı Kaydı
+          </h3>
+
+          <form onSubmit={handleAddDonation} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+            <div>
+              <label style={labelStyle}>Bağışçı Adı Soyadı</label>
+              <input value={donorName} onChange={e => setDonorName(e.target.value)} placeholder="Örn: Ahmet Yılmaz" required style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>T.C. Kimlik Numarası</label>
+              <input value={donorTc} onChange={e => setDonorTc(e.target.value)} placeholder="11 haneli kimlik no" maxLength={11} required style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Kan Grubu</label>
+              <select value={donorBlood} onChange={e => setDonorBlood(e.target.value)} style={{ ...inputStyle, cursor: 'pointer', fontWeight: '700' }}>
+                {KAN_GRUPLARI.map(kg => <option key={kg}>{kg}</option>)}
+              </select>
+            </div>
+            <button type="submit" style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', color: 'white', border: 'none', borderRadius: '12px', padding: '1rem', fontSize: '0.95rem', fontWeight: '800', cursor: 'pointer', boxShadow: '0 10px 20px rgba(37,99,235,0.2)', transition: 'all 0.2s', marginTop: '1rem' }} onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}>
+              Bağışı Kaydet ve Stoğa Ekle
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', paddingBottom: '4rem' }}>

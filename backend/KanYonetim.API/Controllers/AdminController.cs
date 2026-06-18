@@ -1,4 +1,5 @@
 using KanYonetim.API.Data;
+using KanYonetim.API.Models;
 using KanYonetim.API.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace KanYonetim.API.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SubAdmin")]
     [ApiController]
     [Route("api/[controller]")]
     public class AdminController : ControllerBase
@@ -231,6 +232,158 @@ namespace KanYonetim.API.Controllers
 
             await _context.SaveChangesAsync();
             return Ok(new { message = "Stok bilgileri veri tabanına başarıyla kaydedildi." });
+        }
+
+        [HttpGet("stocks")]
+        public async Task<ActionResult<Dictionary<string, Dictionary<string, int>>>> GetStocks()
+        {
+            var districts = await _context.Districts.ToListAsync();
+            var hospitals = await _context.Hospitals.ToListAsync();
+            var bloodTypes = await _context.BloodTypes.ToListAsync();
+            var stocks = await _context.BloodStocks.ToListAsync();
+
+            var result = new Dictionary<string, Dictionary<string, int>>();
+
+            foreach (var district in districts)
+            {
+                var hospital = hospitals.FirstOrDefault(h => h.DistrictId == district.Id);
+                var districtStocks = new Dictionary<string, int>();
+
+                foreach (var bt in bloodTypes)
+                {
+                    int units = 0;
+                    if (hospital != null)
+                    {
+                        var stock = stocks.FirstOrDefault(s => s.HospitalId == hospital.Id && s.BloodTypeId == bt.Id);
+                        if (stock != null)
+                        {
+                            units = stock.Units;
+                        }
+                    }
+                    districtStocks[bt.Name] = units;
+                }
+                result[district.Name] = districtStocks;
+            }
+
+            return Ok(result);
+        }
+
+        [HttpGet("stock-transfers")]
+        public async Task<ActionResult<IEnumerable<object>>> GetStockTransfers()
+        {
+            var transfers = await _context.StockTransfers
+                .OrderByDescending(t => t.TransferDate)
+                .Select(t => new
+                {
+                    t.Id,
+                    t.SenderDistrict,
+                    t.ReceiverDistrict,
+                    kg = t.BloodType,
+                    amount = t.Amount,
+                    t.Distance,
+                    date = t.TransferDate.ToString("dd.MM.yyyy"),
+                    time = t.TransferDate.ToString("HH:mm")
+                })
+                .ToListAsync();
+            return Ok(transfers);
+        }
+
+        public class StockUpdateDto
+        {
+            public string District { get; set; } = string.Empty;
+            public string BloodType { get; set; } = string.Empty;
+            public int Units { get; set; }
+        }
+
+        [HttpPost("stocks/update")]
+        public async Task<IActionResult> UpdateSingleStock([FromBody] StockUpdateDto dto)
+        {
+            if (dto == null) return BadRequest("Geçersiz veri.");
+
+            var district = await _context.Districts.FirstOrDefaultAsync(d => d.Name == dto.District);
+            if (district == null) return BadRequest("İlçe bulunamadı.");
+
+            var hospital = await _context.Hospitals.FirstOrDefaultAsync(h => h.DistrictId == district.Id);
+            if (hospital == null) return BadRequest("Hastane bulunamadı.");
+
+            var bt = await _context.BloodTypes.FirstOrDefaultAsync(b => b.Name == dto.BloodType);
+            if (bt == null) return BadRequest("Kan grubu bulunamadı.");
+
+            var stock = await _context.BloodStocks.FirstOrDefaultAsync(s => s.HospitalId == hospital.Id && s.BloodTypeId == bt.Id);
+            if (stock == null)
+            {
+                stock = new BloodStock { HospitalId = hospital.Id, BloodTypeId = bt.Id, Units = dto.Units, LastUpdated = DateTime.UtcNow };
+                _context.BloodStocks.Add(stock);
+            }
+            else
+            {
+                stock.Units = dto.Units;
+                stock.LastUpdated = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        public class StockTransferDto
+        {
+            public string Sender { get; set; } = string.Empty;
+            public string Receiver { get; set; } = string.Empty;
+            public string Kg { get; set; } = string.Empty;
+            public int Amount { get; set; }
+            public double Distance { get; set; }
+        }
+
+        [HttpPost("stock-transfers")]
+        public async Task<IActionResult> CreateStockTransfer([FromBody] StockTransferDto dto)
+        {
+            if (dto == null) return BadRequest("Geçersiz veri.");
+
+            // Find districts and hospitals
+            var senderDist = await _context.Districts.FirstOrDefaultAsync(d => d.Name == dto.Sender);
+            var receiverDist = await _context.Districts.FirstOrDefaultAsync(d => d.Name == dto.Receiver);
+            if (senderDist == null || receiverDist == null) return BadRequest("Geçersiz ilçe.");
+
+            var senderHosp = await _context.Hospitals.FirstOrDefaultAsync(h => h.DistrictId == senderDist.Id);
+            var receiverHosp = await _context.Hospitals.FirstOrDefaultAsync(h => h.DistrictId == receiverDist.Id);
+            if (senderHosp == null || receiverHosp == null) return BadRequest("Hastaneler bulunamadı.");
+
+            var bt = await _context.BloodTypes.FirstOrDefaultAsync(b => b.Name == dto.Kg);
+            if (bt == null) return BadRequest("Geçersiz kan grubu.");
+
+            var senderStock = await _context.BloodStocks.FirstOrDefaultAsync(s => s.HospitalId == senderHosp.Id && s.BloodTypeId == bt.Id);
+            if (senderStock == null) return BadRequest("Gönderen stok bulunamadı.");
+
+            if (senderStock.Units < dto.Amount) return BadRequest("Yetersiz stok.");
+
+            var receiverStock = await _context.BloodStocks.FirstOrDefaultAsync(s => s.HospitalId == receiverHosp.Id && s.BloodTypeId == bt.Id);
+            if (receiverStock == null)
+            {
+                receiverStock = new BloodStock { HospitalId = receiverHosp.Id, BloodTypeId = bt.Id, Units = 0, LastUpdated = DateTime.UtcNow };
+                _context.BloodStocks.Add(receiverStock);
+            }
+
+            // Deduct and Add
+            senderStock.Units -= dto.Amount;
+            senderStock.LastUpdated = DateTime.UtcNow;
+            receiverStock.Units += dto.Amount;
+            receiverStock.LastUpdated = DateTime.UtcNow;
+
+            // Create transfer record
+            var transfer = new StockTransfer
+            {
+                SenderDistrict = dto.Sender,
+                ReceiverDistrict = dto.Receiver,
+                BloodType = dto.Kg,
+                Amount = dto.Amount,
+                Distance = dto.Distance,
+                TransferDate = DateTime.UtcNow
+            };
+            _context.StockTransfers.Add(transfer);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Transfer başarıyla tamamlandı." });
         }
     }
 }
