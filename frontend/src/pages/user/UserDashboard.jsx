@@ -336,8 +336,83 @@ const UserDashboard = ({ user }) => {
       // Save locally to localstorage for instant alerts sync across tabs
       const existing = JSON.parse(localStorage.getItem('stockAlerts') || '[]');
       localStorage.setItem('stockAlerts', JSON.stringify([newAlert, ...existing].slice(0, 50)));
+
+      // Send notifications to compatible donors
+      const BLOOD_COMPATIBILITY = {
+        '0-': ['0-', '0+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'],
+        '0+': ['0+', 'A+', 'B+', 'AB+'],
+        'A-': ['A-', 'A+', 'AB-', 'AB+'],
+        'A+': ['A+', 'AB+'],
+        'B-': ['B-', 'B+', 'AB-', 'AB+'],
+        'B+': ['B+', 'AB+'],
+        'AB-': ['AB-', 'AB+'],
+        'AB+': ['AB+']
+      };
+
+      const normalizeBT = (bt) => bt ? bt.replace(' Rh(+)', '+').replace(' Rh(-)', '-').replace(' Rh', '') : '';
+
+      const isUserEligible = (userObj) => {
+        const apps = JSON.parse(localStorage.getItem('bloodApplications') || '[]');
+        const approvedApps = apps.filter(a => a.applicantTc === userObj.tc && a.status === 'Approved');
+        
+        const parseDate = (dStr) => {
+          if (!dStr || dStr === 'Kayıt Bulunmuyor') return 0;
+          const parts = dStr.split('.');
+          if (parts.length === 3) return new Date(parts[2], parts[1]-1, parts[0]).getTime();
+          return new Date(dStr).getTime();
+        };
+
+        let maxMs = parseDate(userObj.lastDonationDate);
+        if (approvedApps.length > 0) {
+          approvedApps.forEach(a => {
+            const ms = parseDate(a.date);
+            if (ms > maxMs) maxMs = ms;
+          });
+        }
+        try {
+          const donations = JSON.parse(localStorage.getItem('donationList') || '[]');
+          const userDonations = donations.filter(d => d.tc === userObj.tc);
+          userDonations.forEach(d => {
+            const ms = parseDate(d.date);
+            if (ms > maxMs) maxMs = ms;
+          });
+        } catch (e) {}
+
+        if (maxMs === 0 || isNaN(maxMs)) return true;
+        const waitDays = userObj.gender === 'Kadın' ? 120 : 90;
+        return (maxMs + waitDays * 24 * 60 * 60 * 1000) <= Date.now();
+      };
+
+      const usersList = JSON.parse(localStorage.getItem('usersList') || '[]');
+      const notifications = JSON.parse(localStorage.getItem('user_notifications') || '[]');
+      let notificationCount = 0;
       
-      toast.success('Kan talebiniz oluşturuldu ve diğer bağışçılara iletildi!');
+      usersList.forEach(u => {
+        // Exclude the requester themselves
+        const uBt = normalizeBT(u.bloodType);
+        const aBt = normalizeBT(formData.bloodType);
+        if (u.tc !== user?.tc && (u.role === 'Donor' || u.role === 'Kullanıcı') && uBt && BLOOD_COMPATIBILITY[uBt] && BLOOD_COMPATIBILITY[uBt].includes(aBt)) {
+          if (isUserEligible(u)) {
+            notifications.push({
+              id: Date.now() + Math.random(),
+              receiverTc: u.tc,
+              message: `${formData.hospital} hastanesinde sizin kan verebileceğiniz acil bir hasta bulunuyor. Kan grubunuz (${u.bloodType}) bu talep için uygundur!`,
+              createdAt: new Date().toISOString(),
+              isRead: false,
+              type: 'urgent_request'
+            });
+            notificationCount++;
+          }
+        }
+      });
+      
+      if (notificationCount > 0) {
+        localStorage.setItem('user_notifications', JSON.stringify(notifications));
+        toast.success(`Kan talebiniz oluşturuldu ve ${notificationCount} uygun bağışçıya bildirim gönderildi!`);
+      } else {
+        toast.success('Kan talebiniz oluşturuldu ve platforma iletildi!');
+      }
+
       // Reload lists
       loadDashboardData();
     } catch (e) {

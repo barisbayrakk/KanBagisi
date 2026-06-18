@@ -91,7 +91,7 @@ namespace KanYonetim.API.Services
                                 UserId = user.Id,
                                 Title = "Yeniden hayat kurtarmaya hazırsınız!",
                                 Message = "Son kan bağışınızın üzerinden biyolojik olarak gereken süre geçmiştir. Yeni bir bağış yaparak yeniden hayat kurtarmaya hazırsınız!",
-                                Type = "Success",
+                                Type = "DonationEligibilityReminder",
                                 IsRead = false,
                                 CreatedAt = DateTime.UtcNow
                             };

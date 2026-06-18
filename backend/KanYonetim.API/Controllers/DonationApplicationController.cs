@@ -29,6 +29,18 @@ namespace KanYonetim.API.Controllers
             
             if (existingApplication != null) return BadRequest("Bu talep için zaten başvurunuz bulunmaktadır.");
 
+            var user = await _context.Users.FindAsync(userId);
+            if (user?.LastDonationDate.HasValue == true)
+            {
+                int waitDays = user.Gender == "Kadın" ? 120 : 90;
+                var nextEligibleDate = user.LastDonationDate.Value.AddDays(waitDays);
+                if (DateTime.UtcNow < nextEligibleDate)
+                {
+                    var formattedNextDate = nextEligibleDate.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("tr-TR"));
+                    return BadRequest($"Bağış yapabilmek için yasal bekleme süreniz henüz dolmamıştır. Bir sonraki bağış tarihiniz: {formattedNextDate}");
+                }
+            }
+
             var random = new Random();
             var verificationCode = $"DONOR-{random.Next(1000, 9999)}";
 

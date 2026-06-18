@@ -63,6 +63,18 @@ namespace KanYonetim.API.Controllers
                     CreatedAt = DateTime.UtcNow
                 };
                 _context.ProfileActivityLogs.Add(activityLog);
+
+                var auditLog = new AuditLog
+                {
+                    UserId = user.Id,
+                    ActionType = "Create",
+                    EntityName = "User",
+                    Description = $"Sisteme yeni bir kullanıcı ({user.FullName}) kayıt oldu.",
+                    IpAddress = "System",
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.AuditLogs.Add(auditLog);
+
                 await _context.SaveChangesAsync();
             }
             catch (Exception ex)

@@ -155,6 +155,9 @@ const RequestApprovals = () => {
               });
               localStorage.setItem('user_notifications', JSON.stringify(notifications));
 
+              // Try backend just in case
+              try { await axios.post('/DonationApplication/verify', { protocolNumber: protocol, verificationCode: code }); } catch(e) {}
+
               toast.success('Kan bağışı başarıyla doğrulandı!');
               e.target.reset();
               fetchApprovals();

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
 import { Toaster, toast } from 'react-hot-toast'
-import { Droplets, Heart, LayoutDashboard, LogOut, User, Menu, X, PlusCircle, Activity, MapPin, Calendar, ArrowRight, Settings, Users, Shield, UserRound, Search, Mail, Phone, Filter, TrendingUp, TrendingDown, Truck, CheckCircle, AlertTriangle, RefreshCw, Bell, Trash2, Eye, EyeOff, XCircle } from 'lucide-react'
+import { Droplets, Droplet, Heart, LayoutDashboard, LogOut, User, Menu, X, PlusCircle, Activity, MapPin, Calendar, ArrowRight, Settings, Users, Shield, UserRound, Search, Mail, Phone, Filter, TrendingUp, TrendingDown, Truck, CheckCircle, AlertTriangle, RefreshCw, Bell, Trash2, Eye, EyeOff, XCircle } from 'lucide-react'
 import axios from 'axios'
 import AdminDashboardOverview from './pages/admin/AdminDashboardOverview';
 import UserManagement from './pages/admin/UserManagement';
@@ -10,6 +10,7 @@ import RequestApprovals from './pages/admin/RequestApprovals';
 import Logistics from './pages/admin/Logistics';
 import SecurityPanel from './pages/admin/SecurityPanel';
 import LiveTracking from './pages/admin/LiveTracking';
+import KanRotasi from './pages/admin/KanRotasi';
 import ReCAPTCHA from "react-google-recaptcha"
 import Profile from './pages/Profile';
 import Home from './pages/Home';
@@ -455,24 +456,26 @@ const App = () => {
       if (user.token) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
       }
-      if (user.role === 'Admin' || user.role === 'Yönetici' || user.role === 'SubAdmin') {
-        axios.get('/Admin/users')
-          .then(res => {
-            const mappedUsers = res.data.map(u => ({
-              id: u.id,
-              name: u.fullName,
-              email: u.email,
-              tc: u.tc,
-              phone: u.phone,
-              gender: u.gender || '',
-              role: u.role === 'Admin' || u.role === 'Yönetici' ? 'Yönetici' : u.role === 'SubAdmin' ? 'SubAdmin' : 'Kullanıcı',
-              bloodType: u.bloodTypeName,
-              district: u.districtName
-            }));
-            setUsersList(mappedUsers);
-          })
-          .catch(err => console.error("Error fetching users:", err));
-      }
+      
+      // Fetch users list for all authenticated users to keep local notification targeting in sync
+      axios.get('/Admin/users')
+        .then(res => {
+          const mappedUsers = res.data.map(u => ({
+            id: u.id,
+            name: u.fullName,
+            email: u.email,
+            tc: u.tc,
+            phone: u.phone,
+            gender: u.gender || '',
+            role: u.role === 'Admin' || u.role === 'Yönetici' ? 'Yönetici' : u.role === 'SubAdmin' ? 'SubAdmin' : 'Kullanıcı',
+            bloodType: u.bloodTypeName,
+            district: u.districtName,
+            lastDonationDate: u.lastDonationDate || null
+          }));
+          setUsersList(mappedUsers);
+        })
+        .catch(err => console.error("Error fetching users:", err));
+        
     } else {
       localStorage.removeItem('user')
       delete axios.defaults.headers.common['Authorization'];
@@ -820,6 +823,7 @@ const MyRequests = ({ user }) => {
   const [myAlerts, setMyAlerts] = useState([]);
   const [myCompletedAlerts, setMyCompletedAlerts] = useState([]);
   const [myApplications, setMyApplications] = useState([]);
+  const [myDirectDonations, setMyDirectDonations] = useState([]);
   const [allApps, setAllApps] = useState([]);
   const [activeChat, setActiveChat] = useState(null); // { chatId, otherPartyName }
   const [hasUnreadCreated, setHasUnreadCreated] = useState(false);
@@ -827,13 +831,46 @@ const MyRequests = ({ user }) => {
   const [allMessages, setAllMessages] = useState([]);
 
   useEffect(() => {
+    let backendDons = [];
+
+    const fetchBackendDonations = async () => {
+      try {
+        const res = await axios.get('/User/activities');
+        const logs = res.data || [];
+        backendDons = logs
+          .filter(l => l.actionType === 'DirectDonation')
+          .map(l => {
+            let details = { Hastane: 'Bilinmeyen Hastane', Ilce: 'Bilinmeyen', BloodType: 'Bilinmiyor' };
+            try {
+              details = JSON.parse(l.description);
+            } catch(e) {}
+            const dt = new Date(l.createdAt);
+            return {
+              id: l.id,
+              tc: user.tc,
+              bloodType: details.BloodType || 'Bilinmiyor',
+              ilce: details.Ilce || 'Bilinmeyen',
+              hastane: details.Hastane || 'Bilinmeyen Hastane',
+              date: dt.toLocaleDateString('tr-TR'),
+              time: dt.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+            };
+          });
+      } catch (e) {
+        console.error("Error fetching direct donations", e);
+      }
+    };
+
+    fetchBackendDonations();
+
     const checkMsgs = () => {
       const alerts = JSON.parse(localStorage.getItem('stockAlerts') || '[]');
       const apps = JSON.parse(localStorage.getItem('bloodApplications') || '[]');
       const msgs = JSON.parse(localStorage.getItem('bloodMessages') || '[]');
+      const donations = JSON.parse(localStorage.getItem('donationList') || '[]');
 
       const created = alerts.filter(a => a.requesterTc === user.tc);
       const applied = apps.filter(ap => ap.applicantTc === user.tc);
+      const directDonations = donations.filter(d => d.tc === user.tc);
 
       const approvedAlertIds = new Set(apps.filter(ap => ap.isApproved === true).map(ap => ap.alertId));
       const activeCreated = created.filter(a => !approvedAlertIds.has(a.id));
@@ -842,6 +879,10 @@ const MyRequests = ({ user }) => {
       setMyAlerts(activeCreated);
       setMyCompletedAlerts(completedCreated);
       setMyApplications(applied);
+      
+      const localOnly = directDonations.filter(p => !backendDons.some(b => b.date === p.date && b.hastane === p.hastane));
+      setMyDirectDonations([...backendDons, ...localOnly]);
+      
       setAllApps(apps);
       setAllMessages(msgs);
 
@@ -931,7 +972,7 @@ const MyRequests = ({ user }) => {
           {hasUnreadApplied && <span style={{ position: 'absolute', top: '10px', right: '15px', width: '10px', height: '10px', background: '#fbbf24', borderRadius: '50%', boxShadow: '0 0 10px rgba(251,191,36,0.5)' }} />}
         </button>
         <button onClick={() => setActiveTab('completed')} style={{ flex: 1, padding: '1rem', borderRadius: '8px', border: 'none', background: activeTab === 'completed' ? '#991b1b' : '#ffffff', color: activeTab === 'completed' ? '#ffffff' : '#64748b', fontWeight: '700', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', position: 'relative' }}>
-          Tamamlanan Transferler ({myCompletedAlerts.length})
+          Tamamlanan Transferler ({myCompletedAlerts.length + myDirectDonations.length})
         </button>
       </div>
 
@@ -1045,10 +1086,11 @@ const MyRequests = ({ user }) => {
             ))
           )
         ) : (
-          myCompletedAlerts.length === 0 ? (
+          (myCompletedAlerts.length === 0 && myDirectDonations.length === 0) ? (
             <div style={{ textAlign: 'center', padding: '4rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>Tamamlanan transferiniz bulunmamaktadır.</div>
           ) : (
-            myCompletedAlerts.map(alert => (
+            <>
+            {myCompletedAlerts.map(alert => (
               <div key={alert.id} style={{ background: '#ffffff', borderRadius: '10px', padding: '2rem', border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0,0,0,0.02)', opacity: 0.9 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
                   <div>
@@ -1089,7 +1131,23 @@ const MyRequests = ({ user }) => {
                   </div>
                 </div>
               </div>
-            ))
+            ))}
+            {myDirectDonations.map(don => (
+              <div key={don.id} style={{ background: '#ffffff', borderRadius: '10px', padding: '2rem', border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0,0,0,0.02)', opacity: 0.9 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+                      <span style={{ background: '#fef2f2', color: '#991b1b', padding: '0.25rem 0.75rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '800' }}>{don.bloodType}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>{don.date} {don.time}</span>
+                      <span style={{ background: '#ecfdf5', color: '#059669', padding: '0.25rem 0.75rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><CheckCircle size={14}/> KAN VERİLDİ</span>
+                    </div>
+                    <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', color: '#0f172a' }}>{don.hastane}</h3>
+                    <p style={{ margin: '0.25rem 0 0 0', color: '#64748b', fontSize: '0.85rem' }}>{don.ilce} - Doğrudan Bağış</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+            </>
           )
         )}
       </div>
@@ -1246,7 +1304,7 @@ const BLOOD_COMPATIBILITY = {
 };
 
 // Kan Talepleri tam sayfası
-const KanTalepleri = ({ user }) => {
+const KanTalepleri = ({ user, isAdminView = false }) => {
   const [alerts, setAlerts] = useState(() => {
     return getInitialStockAlerts();
   });
@@ -1417,17 +1475,19 @@ const KanTalepleri = ({ user }) => {
     const allMsgs = JSON.parse(localStorage.getItem('bloodMessages') || '[]');
     localStorage.setItem('bloodMessages', JSON.stringify([...allMsgs, welcomeMsg]));
 
-    // Talep sahibine bildirim gönder
-    const notifications = JSON.parse(localStorage.getItem('user_notifications') || '[]');
-    notifications.push({
-      id: Date.now(),
-      receiverTc: alert.requesterTc,
-      message: `"${alert.hastane}" talebinize ${user.fullName} tarafından kan bağışı başvurusu yapıldı.`,
-      createdAt: new Date().toISOString(),
-      isRead: false,
-      type: 'info'
-    });
-    localStorage.setItem('user_notifications', JSON.stringify(notifications));
+    // Talep sahibine bildirim gönder (Sadece bireysel taleplerde)
+    if (alert.requesterTc) {
+      const notifications = JSON.parse(localStorage.getItem('user_notifications') || '[]');
+      notifications.push({
+        id: Date.now(),
+        receiverTc: alert.requesterTc,
+        message: `"${alert.hastane}" talebinize ${user.fullName} tarafından kan bağışı başvurusu yapıldı.`,
+        createdAt: new Date().toISOString(),
+        isRead: false,
+        type: 'info'
+      });
+      localStorage.setItem('user_notifications', JSON.stringify(notifications));
+    }
 
     toast.success(`${alert.hastane} için başvurunuz alındı! Hastaneye gitmeniz bekleniyor.`);
   };
@@ -1498,6 +1558,15 @@ const KanTalepleri = ({ user }) => {
 
     return matchUrgency && matchBlood && matchSearch && matchSource && matchDistrict && matchDistance && matchTime;
   });
+  const categories = [
+    { id: 'Tümü', label: 'Tüm Talepler', icon: <Bell size={18} /> },
+    { id: 'Hastane', label: 'Acil Hastane Kan Talepleri', icon: <Activity size={18} /> },
+    { id: 'Vatandaş', label: 'Acil Vatandaş Kan Talebi', icon: <User size={18} /> }
+  ];
+  
+  if (!isAdminView) {
+    categories.push({ id: 'Uygun', label: 'Kan Verebileceğim Talepler', icon: <Heart size={18} /> });
+  }
 
   return (
     <div className="animate-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -1535,12 +1604,7 @@ const KanTalepleri = ({ user }) => {
 
       {/* Kategori Filtreleri */}
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-        {[
-          { id: 'Tümü', label: 'Tüm Talepler', icon: <Bell size={18} /> },
-          { id: 'Hastane', label: 'Acil Hastane Kan Talepleri', icon: <Activity size={18} /> },
-          { id: 'Vatandaş', label: 'Acil Vatandaş Kan Talebi', icon: <User size={18} /> },
-          { id: 'Uygun', label: 'Kan Verebileceğim Talepler', icon: <Heart size={18} /> }
-        ].map(cat => (
+        {categories.map(cat => (
           <button
             key={cat.id}
             onClick={() => setFilterSource(cat.id)}
@@ -1766,14 +1830,16 @@ const KanTalepleri = ({ user }) => {
                     <span style={{ color: '#0f172a', fontWeight: '700', fontSize: '0.88rem' }}>İhtiyaç Var</span>
                   </div>
                 </div>
-                <button
-                  style={{ background: 'linear-gradient(135deg, #991b1b, #7f1d1d)', color: 'white', border: 'none', padding: '0.65rem 1.1rem', fontSize: '0.82rem', borderRadius: '12px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 12px rgba(225,29,72,0.25)', transition: 'opacity 0.2s' }}
-                  onMouseOver={e => e.currentTarget.style.opacity = '0.88'}
-                  onMouseOut={e => e.currentTarget.style.opacity = '1'}
-                  onClick={() => handleApply(alert)}
-                >
-                  Başvur
-                </button>
+                {!isAdminView && (
+                  <button
+                    style={{ background: 'linear-gradient(135deg, #991b1b, #7f1d1d)', color: 'white', border: 'none', padding: '0.65rem 1.1rem', fontSize: '0.82rem', borderRadius: '12px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 12px rgba(225,29,72,0.25)', transition: 'opacity 0.2s' }}
+                    onMouseOver={e => e.currentTarget.style.opacity = '0.88'}
+                    onMouseOut={e => e.currentTarget.style.opacity = '1'}
+                    onClick={() => handleApply(alert)}
+                  >
+                    Başvur
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -2001,18 +2067,18 @@ const Register = ({ setUser, usersList, setUsersList }) => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div>
               <label style={{ fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.25rem' }}>Ad Soyad</label>
-              <input type="text" name="fullName" placeholder="Adınız ve Soyadınız" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.6rem 0.75rem', borderRadius: '8px', width: '100%', fontSize: '0.85rem' }} />
+              <input type="text" name="fullName" placeholder="Adınız ve Soyadınız" required onInput={(e) => e.target.value = e.target.value.replace(/[0-9]/g, '')} style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.6rem 0.75rem', borderRadius: '8px', width: '100%', fontSize: '0.85rem' }} />
             </div>
             <div>
               <label style={{ fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.25rem' }}>T.C. Kimlik Numarası</label>
-              <input type="text" name="tcKimlik" placeholder="11 Haneli TC Kimlik" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.6rem 0.75rem', borderRadius: '8px', width: '100%', fontSize: '0.85rem' }} />
+              <input type="text" name="tcKimlik" placeholder="11 Haneli TC Kimlik" required minLength={11} maxLength={11} onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.6rem 0.75rem', borderRadius: '8px', width: '100%', fontSize: '0.85rem' }} />
             </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div>
               <label style={{ fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.25rem' }}>Telefon Numarası</label>
-              <input type="text" name="phone" placeholder="05XX XXX XX XX" required style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.6rem 0.75rem', borderRadius: '8px', width: '100%', fontSize: '0.85rem' }} />
+              <input type="text" name="phone" placeholder="05XX XXX XX XX" required maxLength={11} onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} style={{ background: '#1e293b', border: '1px solid #334155', color: '#ffffff', outline: 'none', padding: '0.6rem 0.75rem', borderRadius: '8px', width: '100%', fontSize: '0.85rem' }} />
             </div>
             <div>
               <label style={{ fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '0.25rem' }}>Cinsiyet</label>
@@ -2288,22 +2354,22 @@ const Dashboard = ({ user, usersList, setUsersList }) => {
               style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeAdminTab === 'approvals' ? '#991b1b' : 'transparent', color: activeAdminTab === 'approvals' ? '#ffffff' : '#475569', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
               <CheckCircle size={18} /> Onay Merkezi
             </button>
+            <button 
+              onClick={() => setActiveAdminTab('kanrotasi')} 
+              style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeAdminTab === 'kanrotasi' ? '#991b1b' : 'transparent', color: activeAdminTab === 'kanrotasi' ? '#ffffff' : '#475569', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
+              <Droplet size={18} /> Kan Rotası
+            </button>
+            <button 
+              onClick={() => setActiveAdminTab('requests')} 
+              style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeAdminTab === 'requests' ? '#991b1b' : 'transparent', color: activeAdminTab === 'requests' ? '#ffffff' : '#475569', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
+              <Bell size={18} /> Kan Talepleri
+            </button>
             {(user.role === 'Admin' || user.role === 'Yönetici') && (
               <>
                 <button 
                   onClick={() => setActiveAdminTab('logistics')} 
                   style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeAdminTab === 'logistics' ? '#991b1b' : 'transparent', color: activeAdminTab === 'logistics' ? '#ffffff' : '#475569', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
                   <Truck size={18} /> Lojistik
-                </button>
-                <button 
-                  onClick={() => setActiveAdminTab('security')} 
-                  style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeAdminTab === 'security' ? '#991b1b' : 'transparent', color: activeAdminTab === 'security' ? '#ffffff' : '#475569', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
-                  <Shield size={18} /> Güvenlik Paneli
-                </button>
-                <button 
-                  onClick={() => setActiveAdminTab('livetracking')} 
-                  style={{ padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', background: activeAdminTab === 'livetracking' ? '#991b1b' : 'transparent', color: activeAdminTab === 'livetracking' ? '#ffffff' : '#475569', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}>
-                  <MapPin size={18} /> Canlı Takip & Harita
                 </button>
               </>
             )}
@@ -2315,9 +2381,9 @@ const Dashboard = ({ user, usersList, setUsersList }) => {
             {activeAdminTab === 'users' && <UserManagement user={user} usersList={usersList} setUsersList={setUsersList} />}
             {activeAdminTab === 'logs' && <AuditLogs />}
             {activeAdminTab === 'approvals' && <RequestApprovals />}
+            {activeAdminTab === 'kanrotasi' && <KanRotasi />}
+            {activeAdminTab === 'requests' && <KanTalepleri user={user} isAdminView={true} />}
             {activeAdminTab === 'logistics' && <Logistics />}
-            {activeAdminTab === 'security' && <SecurityPanel />}
-            {activeAdminTab === 'livetracking' && <LiveTracking />}
           </div>
 
         </div>
@@ -3003,25 +3069,60 @@ const AdminDashboard = ({ user, usersList, setUsersList }) => {
     }
   };
 
-  const handleAddDonation = (e) => {
+  const handleAddDonation = async (e) => {
     e.preventDefault();
     if (!donorName.trim() || !donorTc.trim()) return;
 
-    // Find if there is a registered user with this TC
-    const matchedUser = usersList.find(u => u.tc === donorTc);
-
-    // Warn if donor is within wait period
-    if (matchedUser && matchedUser.lastDonationDate && matchedUser.lastDonationDate !== 'Kayıt Bulunmuyor') {
-      let lastDate;
-      if (typeof matchedUser.lastDonationDate === 'string' && matchedUser.lastDonationDate.includes('.') && !matchedUser.lastDonationDate.includes('-') && matchedUser.lastDonationDate.split('.').length === 3) {
-        const parts = matchedUser.lastDonationDate.split('.');
-        lastDate = new Date(parts[2], parts[1]-1, parts[0]);
-      } else {
-        lastDate = new Date(matchedUser.lastDonationDate);
+    // Check frontend cooldown (same logic as handleApply)
+    const parseDateToMs = (dStr) => {
+      if (!dStr || dStr === 'Kayıt Bulunmuyor') return 0;
+      if (typeof dStr === 'string' && dStr.includes('.') && !dStr.includes('-') && dStr.split('.').length === 3) {
+        const parts = dStr.split('.');
+        return new Date(parts[2], parts[1]-1, parts[0]).getTime();
       }
-      if (!isNaN(lastDate.getTime())) {
-        const daysToAdd = matchedUser.gender === 'Kadın' ? 120 : 90;
-        const nextDate = new Date(lastDate.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
+      const t = new Date(dStr).getTime();
+      return isNaN(t) ? 0 : t;
+    };
+
+    const dates = [];
+    const localUsers = JSON.parse(localStorage.getItem('usersList') || '[]');
+    const currentUserData = localUsers.find(u => u.tc === donorTc);
+    if (currentUserData?.lastDonationDate) dates.push(currentUserData.lastDonationDate);
+    
+    try {
+      const apps = JSON.parse(localStorage.getItem('bloodApplications') || '[]');
+      const approvedApps = apps.filter(a => a.applicantTc === donorTc && (a.status === 'Approved' || a.isApproved));
+      approvedApps.forEach(a => dates.push(a.date));
+    } catch (e) {}
+
+    try {
+      const donations = JSON.parse(localStorage.getItem('donationList') || '[]');
+      const userDonations = donations.filter(d => d.tc === donorTc);
+      userDonations.forEach(d => dates.push(d.date));
+    } catch (e) {}
+
+    let maxMs = 0;
+    let lastDateToUse = null;
+    dates.forEach(d => {
+      const ms = parseDateToMs(d);
+      if (ms > maxMs) {
+        maxMs = ms;
+        lastDateToUse = d;
+      }
+    });
+
+    if (lastDateToUse && lastDateToUse !== 'Kayıt Bulunmuyor') {
+      let lastDonation;
+      if (typeof lastDateToUse === 'string' && lastDateToUse.includes('.') && !lastDateToUse.includes('-') && lastDateToUse.split('.').length === 3) {
+        const parts = lastDateToUse.split('.');
+        lastDonation = new Date(parts[2], parts[1]-1, parts[0]);
+      } else {
+        lastDonation = new Date(lastDateToUse);
+      }
+      if (!isNaN(lastDonation.getTime())) {
+        const isFemale = currentUserData?.gender === 'Kadın';
+        const daysToAdd = isFemale ? 120 : 90;
+        const nextDate = new Date(lastDonation.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
         if (nextDate > new Date()) {
           const formattedNextDate = nextDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
           toast.error(`Bu bağışçının yasal bekleme süresi henüz dolmamıştır! Bir sonraki bağış tarihi: ${formattedNextDate}`);
@@ -3030,9 +3131,36 @@ const AdminDashboard = ({ user, usersList, setUsersList }) => {
       }
     }
 
-    // Use registered details if found, otherwise fall back to form input
+    const matchedUser = usersList.find(u => u.tc === donorTc);
     const finalName = matchedUser ? (matchedUser.name || matchedUser.fullName || donorName) : donorName;
     const finalBlood = matchedUser ? (matchedUser.bloodType || donorBlood) : donorBlood;
+
+    let newLastDonationDate = new Date().toISOString();
+
+    try {
+      const response = await axios.post('/Admin/add-donation', {
+        tc: donorTc,
+        name: finalName,
+        bloodType: finalBlood,
+        ilce: selectedIlce,
+        hastane: getHastane(selectedIlce)
+      });
+      if (response.data && response.data.lastDonationDate) {
+        newLastDonationDate = response.data.lastDonationDate;
+      }
+    } catch (err) {
+      if (err.response && err.response.status === 400) {
+        // Cooldown period error from backend
+        toast.error(typeof err.response.data === 'string' ? err.response.data : 'Bu bağışçının yasal bekleme süresi henüz dolmamıştır!');
+        return;
+      } else if (err.response && err.response.status === 404) {
+        // User not found in DB, proceed with local save
+        console.warn('Bağışçı veritabanında bulunamadı, sadece yerel kayıt yapılıyor.');
+      } else {
+        toast.error('Bağış kaydedilirken sunucu hatası oluştu.');
+        return;
+      }
+    }
 
     const newEntry = {
       id: Date.now(),
@@ -3052,7 +3180,7 @@ const AdminDashboard = ({ user, usersList, setUsersList }) => {
     if (usersList && setUsersList) {
       setUsersList(prev => prev.map(u => u.tc === donorTc ? {
         ...u,
-        lastDonationDate: new Date().toISOString()
+        lastDonationDate: newLastDonationDate
       } : u));
     }
 
@@ -3062,7 +3190,7 @@ const AdminDashboard = ({ user, usersList, setUsersList }) => {
       try {
         const loggedInUser = JSON.parse(loggedInUserStr);
         if (loggedInUser && loggedInUser.tc === donorTc) {
-          loggedInUser.lastDonationDate = new Date().toISOString();
+          loggedInUser.lastDonationDate = newLastDonationDate;
           localStorage.setItem('user', JSON.stringify(loggedInUser));
           if (setUser && user && user.tc === donorTc) {
             setUser(loggedInUser);
@@ -3107,7 +3235,74 @@ const AdminDashboard = ({ user, usersList, setUsersList }) => {
     };
     const existing = JSON.parse(localStorage.getItem('stockAlerts') || '[]');
     localStorage.setItem('stockAlerts', JSON.stringify([newAlert, ...existing].slice(0, 10)));
-    toast.success(`${alertIlce} için acil kan ihtiyacı bildirimi yayınlandı!`);
+
+    // Send notifications to compatible donors
+    try {
+      const usersList = JSON.parse(localStorage.getItem('usersList') || '[]');
+      const notifications = JSON.parse(localStorage.getItem('user_notifications') || '[]');
+      let notificationCount = 0;
+      
+      const normalizeBT = (bt) => bt ? bt.replace(' Rh(+)', '+').replace(' Rh(-)', '-').replace(' Rh', '') : '';
+      
+      const isUserEligible = (userObj) => {
+        const apps = JSON.parse(localStorage.getItem('bloodApplications') || '[]');
+        const approvedApps = apps.filter(a => a.applicantTc === userObj.tc && a.status === 'Approved');
+        
+        const parseDate = (dStr) => {
+          if (!dStr || dStr === 'Kayıt Bulunmuyor') return 0;
+          const parts = dStr.split('.');
+          if (parts.length === 3) return new Date(parts[2], parts[1]-1, parts[0]).getTime();
+          return new Date(dStr).getTime();
+        };
+
+        let maxMs = parseDate(userObj.lastDonationDate);
+        if (approvedApps.length > 0) {
+          approvedApps.forEach(a => {
+            const ms = parseDate(a.date);
+            if (ms > maxMs) maxMs = ms;
+          });
+        }
+        try {
+          const donations = JSON.parse(localStorage.getItem('donationList') || '[]');
+          const userDonations = donations.filter(d => d.tc === userObj.tc);
+          userDonations.forEach(d => {
+            const ms = parseDate(d.date);
+            if (ms > maxMs) maxMs = ms;
+          });
+        } catch (e) {}
+
+        if (maxMs === 0 || isNaN(maxMs)) return true;
+        const waitDays = userObj.gender === 'Kadın' ? 120 : 90;
+        return (maxMs + waitDays * 24 * 60 * 60 * 1000) <= Date.now();
+      };
+
+      usersList.forEach(u => {
+        const uBt = normalizeBT(u.bloodType);
+        const aBt = normalizeBT(alertBlood);
+        if ((u.role === 'Donor' || u.role === 'Kullanıcı') && uBt && BLOOD_COMPATIBILITY[uBt] && BLOOD_COMPATIBILITY[uBt].includes(aBt)) {
+          if (isUserEligible(u)) {
+            notifications.push({
+              id: Date.now() + Math.random(),
+              receiverTc: u.tc,
+              message: `${getHastane(alertIlce)} hastanesinde sizin kan verebileceğiniz acil bir hasta bulunuyor. Kan grubunuz (${u.bloodType}) bu talep için uygundur!`,
+              createdAt: new Date().toISOString(),
+              isRead: false,
+              type: 'urgent_request'
+            });
+            notificationCount++;
+          }
+        }
+      });
+      
+      if (notificationCount > 0) {
+        localStorage.setItem('user_notifications', JSON.stringify(notifications));
+        toast.success(`${alertIlce} için acil kan ihtiyacı bildirimi yayınlandı ve ${notificationCount} uygun bağışçıya bildirim gönderildi!`);
+      } else {
+        toast.success(`${alertIlce} için acil kan ihtiyacı bildirimi yayınlandı!`);
+      }
+    } catch (e) {
+      toast.success(`${alertIlce} için acil kan ihtiyacı bildirimi yayınlandı!`);
+    }
   };
 
   const labelStyle = { fontSize: '0.8rem', fontWeight: '700', color: '#475569', display: 'block', marginBottom: '0.4rem' };
@@ -3166,6 +3361,42 @@ const AdminDashboard = ({ user, usersList, setUsersList }) => {
             </button>
           </form>
         </div>
+
+        {/* Stok Azaldı Bildirimi */}
+        <div style={{ width: '100%', maxWidth: '600px', background: '#fef2f2', borderRadius: '20px', padding: '2.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.06)', border: '1px solid #ffe4e6' }}>
+          <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: '#7f1d1d', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', margin: 0 }}>
+            <Activity size={20} style={{ color: '#7f1d1d' }} />
+            Stok Azaldı Bildirimi
+          </h3>
+          <p style={{ fontSize: '0.85rem', color: '#9f1239', marginBottom: '1.5rem', lineHeight: '1.4' }}>Acil kan ihtiyacını diğer hastanelere ve platforma duyurun.</p>
+
+          <form onSubmit={handleStockAlert} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+            <div>
+              <label style={{ ...labelStyle, color: '#9f1239' }}>Kan Grubu</label>
+              <select value={alertBlood} onChange={e => setAlertBlood(e.target.value)} style={{ ...inputStyle, background: '#ffffff', border: '1px solid #fecdd3', cursor: 'pointer', fontWeight: '700' }}>
+                {KAN_GRUPLARI.map(kg => <option key={kg}>{kg}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ ...labelStyle, color: '#9f1239' }}>İlçe / Hastane</label>
+              <select value={alertIlce} onChange={e => setAlertIlce(e.target.value)} style={{ ...inputStyle, background: '#ffffff', border: '1px solid #fecdd3', cursor: 'pointer', fontWeight: '700' }}>
+                {ISTANBUL_ILCELER.map(ilce => <option key={ilce} value={ilce}>{ilce} - {getHastane(ilce)}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ ...labelStyle, color: '#9f1239' }}>Aciliyet</label>
+              <select value={alertUrgency} onChange={e => setAlertUrgency(e.target.value)} style={{ ...inputStyle, background: '#ffffff', border: '1px solid #fecdd3', cursor: 'pointer', fontWeight: '700' }}>
+                <option value="Kritik">Kritik</option>
+                <option value="Acil">Acil</option>
+                <option value="Normal">Normal</option>
+              </select>
+            </div>
+            <button type="submit" style={{ background: '#991b1b', color: 'white', border: 'none', borderRadius: '12px', padding: '1rem', fontSize: '0.95rem', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 14px rgba(225,29,72,0.2)', transition: 'all 0.2s', marginTop: '0.5rem' }}>
+              Talebi Yayınla
+            </button>
+          </form>
+        </div>
+
       </div>
     );
   }

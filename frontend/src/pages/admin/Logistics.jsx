@@ -19,9 +19,9 @@ const Logistics = () => {
       } else {
         // Mock data
         setTransfers([
-          { id: 1, hospitalName: 'Şişli Etfal Hastanesi', courierName: 'Ahmet Yılmaz', status: 'InTransit', estimatedDelivery: new Date(Date.now() + 3600000).toISOString(), createdAt: new Date(Date.now() - 3600000).toISOString() },
-          { id: 2, hospitalName: 'Çam ve Sakura Şehir Hastanesi', courierName: 'Atanmadı', status: 'Pending', estimatedDelivery: null, createdAt: new Date(Date.now() - 1800000).toISOString() },
-          { id: 3, hospitalName: 'Üsküdar Devlet Hastanesi', courierName: 'Mehmet Demir', status: 'Delivered', estimatedDelivery: new Date(Date.now() - 3600000).toISOString(), createdAt: new Date(Date.now() - 7200000).toISOString() }
+          { id: 1, senderHospital: 'Genel Stok (Kızılay)', receiverHospital: 'Şişli Etfal Hastanesi', bloodType: 'A+', amount: 5, courierName: 'Ahmet Yılmaz', status: 'InTransit', estimatedDelivery: new Date(Date.now() + 3600000).toISOString(), createdAt: new Date(Date.now() - 3600000).toISOString() },
+          { id: 2, senderHospital: 'Genel Stok (Kızılay)', receiverHospital: 'Çam ve Sakura Şehir Hastanesi', bloodType: 'B-', amount: 2, courierName: 'Atanmadı', status: 'Pending', estimatedDelivery: null, createdAt: new Date(Date.now() - 1800000).toISOString() },
+          { id: 3, senderHospital: 'Genel Stok (Kızılay)', receiverHospital: 'Üsküdar Devlet Hastanesi', bloodType: '0+', amount: 8, courierName: 'Mehmet Demir', status: 'Delivered', estimatedDelivery: new Date(Date.now() - 3600000).toISOString(), createdAt: new Date(Date.now() - 7200000).toISOString() }
         ]);
       }
     } catch (error) {
@@ -47,24 +47,6 @@ const Logistics = () => {
           <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', marginBottom: '0.5rem' }}>Lojistik Yönetimi</h1>
           <p style={{ color: '#64748b', fontSize: '1rem', margin: 0 }}>Kan transferlerini, kurye atamalarını ve teslimat durumlarını takip edin.</p>
         </div>
-        <button style={{ padding: '0.875rem 1.5rem', borderRadius: '12px', border: 'none', background: '#3b82f6', color: 'white', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 4px 12px rgba(59,130,246,0.3)' }}>
-          <PackageOpen size={18} /> Yeni Transfer Oluştur
-        </button>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-        <div className="card glass" style={{ background: '#ffffff', borderRadius: '10px', padding: '1.5rem', border: '1px solid rgba(0,0,0,0.03)', boxShadow: '0 10px 40px rgba(0,0,0,0.02)' }}>
-          <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '600', marginBottom: '0.5rem' }}>Aktif Transferler (Yolda)</div>
-          <div style={{ fontSize: '2rem', fontWeight: '800', color: '#2563eb' }}>{transfers.filter(t => t.status === 'InTransit').length}</div>
-        </div>
-        <div className="card glass" style={{ background: '#ffffff', borderRadius: '10px', padding: '1.5rem', border: '1px solid rgba(0,0,0,0.03)', boxShadow: '0 10px 40px rgba(0,0,0,0.02)' }}>
-          <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '600', marginBottom: '0.5rem' }}>Kurye Bekleyenler</div>
-          <div style={{ fontSize: '2rem', fontWeight: '800', color: '#d97706' }}>{transfers.filter(t => t.status === 'Pending').length}</div>
-        </div>
-        <div className="card glass" style={{ background: '#ffffff', borderRadius: '10px', padding: '1.5rem', border: '1px solid rgba(0,0,0,0.03)', boxShadow: '0 10px 40px rgba(0,0,0,0.02)' }}>
-          <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '600', marginBottom: '0.5rem' }}>Bugün Teslim Edilenler</div>
-          <div style={{ fontSize: '2rem', fontWeight: '800', color: '#059669' }}>{transfers.filter(t => t.status === 'Delivered').length}</div>
-        </div>
       </div>
 
       <div className="card glass" style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.03)', boxShadow: '0 20px 50px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
@@ -73,7 +55,8 @@ const Logistics = () => {
             <thead>
               <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                 <th style={{ padding: '1rem 2rem', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', letterSpacing: '0.05em' }}>TRANSFER KODU</th>
-                <th style={{ padding: '1rem 2rem', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', letterSpacing: '0.05em' }}>HEDEF HASTANE</th>
+                <th style={{ padding: '1rem 2rem', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', letterSpacing: '0.05em' }}>GÖNDEREN &rarr; HEDEF</th>
+                <th style={{ padding: '1rem 2rem', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', letterSpacing: '0.05em' }}>KAN BİLGİSİ</th>
                 <th style={{ padding: '1rem 2rem', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', letterSpacing: '0.05em' }}>KURYE</th>
                 <th style={{ padding: '1rem 2rem', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', letterSpacing: '0.05em' }}>DURUM</th>
                 <th style={{ padding: '1rem 2rem', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', letterSpacing: '0.05em', textAlign: 'right' }}>TAHMİNİ TESLİMAT</th>
@@ -81,15 +64,28 @@ const Logistics = () => {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="5" style={{ padding: '3rem', textAlign: 'center' }}>Yükleniyor...</td></tr>
+                <tr><td colSpan="6" style={{ padding: '3rem', textAlign: 'center' }}>Yükleniyor...</td></tr>
               ) : transfers.map((t, idx) => (
                 <tr key={t.id} style={{ borderBottom: idx !== transfers.length - 1 ? '1px solid #f1f5f9' : 'none', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#f8fafc'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
                   <td style={{ padding: '1.25rem 2rem', fontWeight: '700', color: '#0f172a', fontSize: '0.9rem', fontFamily: 'monospace' }}>
                     TRN-{t.id.toString().padStart(5, '0')}
                   </td>
                   <td style={{ padding: '1.25rem 2rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#0f172a', fontWeight: '600' }}>
-                      <MapPin size={16} color="#94a3b8" /> {t.hospitalName}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', color: '#0f172a' }}>
+                      <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{t.senderHospital}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '600' }}>
+                        <MapPin size={14} color="#94a3b8" /> {t.receiverHospital}
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ padding: '1.25rem 2rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <span style={{ background: '#fef2f2', color: '#dc2626', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: '800', fontSize: '0.8rem' }}>
+                        {t.bloodType || '-'}
+                      </span>
+                      <span style={{ fontSize: '0.8rem', color: '#475569', fontWeight: '600' }}>
+                        {t.amount || 0} Ünite
+                      </span>
                     </div>
                   </td>
                   <td style={{ padding: '1.25rem 2rem' }}>

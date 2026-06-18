@@ -19,6 +19,74 @@ namespace KanYonetim.API.Controllers
             _context = context;
         }
 
+        [AllowAnonymous]
+        [HttpPost("seed-10-users")]
+        public async Task<IActionResult> Seed10Users()
+        {
+            try
+            {
+                var users = new List<User>();
+                var random = new Random();
+                var bloodTypes = await _context.BloodTypes.ToListAsync();
+                var districts = await _context.Districts.ToListAsync();
+                string[] maleNames = { "Ahmet", "Mehmet", "Can", "Ali", "Burak" };
+                string[] femaleNames = { "Ayşe", "Fatma", "Elif", "Zeynep", "Merve" };
+                string[] surnames = { "Yılmaz", "Kaya", "Demir", "Çelik", "Şahin", "Öztürk", "Aydın", "Özdemir", "Arslan", "Doğan" };
+
+                for (int i = 0; i < 5; i++)
+                {
+                    var bt = bloodTypes[random.Next(bloodTypes.Count)];
+                    var dist = districts[random.Next(districts.Count)];
+                    users.Add(new User
+                    {
+                        FullName = maleNames[i] + " " + surnames[random.Next(surnames.Length)],
+                        Email = $"test.erkek{i + 1}_{Guid.NewGuid().ToString().Substring(0, 4)}@gmail.com",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("Sifre123!"),
+                        Tc = $"100{random.Next(10000000, 99999999)}",
+                        Phone = "05320000" + random.Next(100, 999).ToString(),
+                        Gender = "Erkek",
+                        BloodTypeId = bt.Id,
+                        DistrictId = dist.Id,
+                        Role = "Donor",
+                        IsEmailVerified = true,
+                        IsPhoneVerified = true,
+                        DateOfBirth = new DateTime(1990 + random.Next(10), random.Next(1, 12), random.Next(1, 28), 0, 0, 0, DateTimeKind.Utc),
+                        Weight = random.Next(65, 95)
+                    });
+                }
+
+                for (int i = 0; i < 5; i++)
+                {
+                    var bt = bloodTypes[random.Next(bloodTypes.Count)];
+                    var dist = districts[random.Next(districts.Count)];
+                    users.Add(new User
+                    {
+                        FullName = femaleNames[i] + " " + surnames[random.Next(surnames.Length)],
+                        Email = $"test.kadin{i + 1}_{Guid.NewGuid().ToString().Substring(0, 4)}@gmail.com",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("Sifre123!"),
+                        Tc = $"200{random.Next(10000000, 99999999)}",
+                        Phone = "05330000" + random.Next(100, 999).ToString(),
+                        Gender = "Kadın",
+                        BloodTypeId = bt.Id,
+                        DistrictId = dist.Id,
+                        Role = "Donor",
+                        IsEmailVerified = true,
+                        IsPhoneVerified = true,
+                        DateOfBirth = new DateTime(1990 + random.Next(10), random.Next(1, 12), random.Next(1, 28), 0, 0, 0, DateTimeKind.Utc),
+                        Weight = random.Next(55, 75)
+                    });
+                }
+
+                _context.Users.AddRange(users);
+                await _context.SaveChangesAsync();
+                return Ok("10 adet test hesabı (5 erkek, 5 kadın) başarıyla eklendi.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.InnerException != null ? ex.InnerException.Message : ex.Message);
+            }
+        }
+
         [HttpGet("users")]
         public async Task<ActionResult<IEnumerable<UserListDto>>> GetUsers()
         {
@@ -35,11 +103,59 @@ namespace KanYonetim.API.Controllers
                     Role = u.Role,
                     BloodTypeName = u.BloodType != null ? u.BloodType.Name : "",
                     DistrictName = u.District != null ? u.District.Name : "",
+                    Gender = u.Gender,
+                    LastDonationDate = u.LastDonationDate,
                     CreatedAt = u.CreatedAt
                 })
                 .ToListAsync();
 
             return users;
+        }
+
+        [HttpPost("add-donation")]
+        public async Task<ActionResult> AddDirectDonation([FromBody] AddDonationDto dto)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Tc == dto.Tc);
+            if (user != null)
+            {
+                if (user.LastDonationDate.HasValue)
+                {
+                    int waitDays = user.Gender == "Kadın" ? 120 : 90;
+                    var nextEligibleDate = user.LastDonationDate.Value.AddDays(waitDays);
+                    if (DateTime.UtcNow < nextEligibleDate)
+                    {
+                        var formattedNextDate = nextEligibleDate.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("tr-TR"));
+                        return BadRequest($"Bu bağışçının yasal bekleme süresi henüz dolmamıştır! Bir sonraki bağış tarihi: {formattedNextDate}");
+                    }
+                }
+
+                user.LastDonationDate = DateTime.UtcNow;
+                
+                // Add activity log
+                var activityLog = new ProfileActivityLog
+                {
+                    UserId = user.Id,
+                    ActionType = "DirectDonation",
+                    Description = System.Text.Json.JsonSerializer.Serialize(new { Ilce = dto.Ilce, Hastane = dto.Hastane, BloodType = dto.BloodType }),
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.ProfileActivityLogs.Add(activityLog);
+
+                var auditLog = new AuditLog
+                {
+                    UserId = user.Id,
+                    ActionType = "Create",
+                    EntityName = "DirectDonation",
+                    Description = $"Yönetici tarafından {user.FullName} ({user.Tc}) adına doğrudan bağış kaydı oluşturuldu.",
+                    IpAddress = "System",
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.AuditLogs.Add(auditLog);
+
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Bağış başarıyla kaydedildi.", lastDonationDate = user.LastDonationDate });
+            }
+            return NotFound("Bağışçı bulunamadı. Sadece yerel kayıt yapılacaktır.");
         }
 
         [HttpGet("stats")]
@@ -159,18 +275,42 @@ namespace KanYonetim.API.Controllers
             var logistics = await _context.LogisticsTransfers
                 .Include(l => l.Hospital)
                 .Include(l => l.Courier)
-                .OrderByDescending(l => l.CreatedAt)
+                .Include(l => l.DonationRequest).ThenInclude(d => d.BloodType)
                 .Select(l => new
                 {
-                    l.Id,
-                    HospitalName = l.Hospital != null ? l.Hospital.Name : "Bilinmiyor",
+                    Id = l.Id,
+                    SenderHospital = "Genel Stok (Kızılay)",
+                    ReceiverHospital = l.Hospital != null ? l.Hospital.Name : "Bilinmiyor",
+                    BloodType = l.DonationRequest != null && l.DonationRequest.BloodType != null ? l.DonationRequest.BloodType.Name : "-",
+                    Amount = l.DonationRequest != null ? l.DonationRequest.UnitsNeeded : 0,
                     CourierName = l.Courier != null ? l.Courier.FullName : "Atanmadı",
-                    l.Status,
-                    l.EstimatedDelivery,
-                    l.CreatedAt
+                    Status = l.Status,
+                    EstimatedDelivery = l.EstimatedDelivery,
+                    CreatedAt = l.CreatedAt
                 })
                 .ToListAsync();
-            return Ok(logistics);
+
+            var stockTransfers = await _context.StockTransfers
+                .Select(s => new
+                {
+                    Id = s.Id + 10000,
+                    SenderHospital = s.SenderDistrict + " Hastanesi",
+                    ReceiverHospital = s.ReceiverDistrict + " Hastanesi",
+                    BloodType = s.BloodType,
+                    Amount = s.Amount,
+                    CourierName = "Sistem Transferi",
+                    Status = "Delivered",
+                    EstimatedDelivery = (DateTime?)s.TransferDate,
+                    CreatedAt = s.TransferDate
+                })
+                .ToListAsync();
+
+            var combined = logistics
+                .Concat(stockTransfers)
+                .OrderByDescending(x => x.CreatedAt)
+                .ToList();
+
+            return Ok(combined);
         }
 
         [HttpGet("security-logs")]

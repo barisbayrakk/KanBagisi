@@ -53,6 +53,15 @@ namespace KanYonetim.API.Models.DTOs
         public int Units { get; set; }
     }
 
+    public class AddDonationDto
+    {
+        public string Tc { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string BloodType { get; set; } = string.Empty;
+        public string Ilce { get; set; } = string.Empty;
+        public string Hastane { get; set; } = string.Empty;
+    }
+
     // Donation Request DTOs
     public class CreateDonationRequestDto
     {
@@ -139,6 +148,8 @@ namespace KanYonetim.API.Models.DTOs
         public string Role { get; set; } = string.Empty;
         public string BloodTypeName { get; set; } = string.Empty;
         public string DistrictName { get; set; } = string.Empty;
+        public string Gender { get; set; } = string.Empty;
+        public DateTime? LastDonationDate { get; set; }
         public DateTime CreatedAt { get; set; }
     }
     // Profile DTOs
