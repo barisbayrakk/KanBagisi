@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lock, Smartphone, Key } from 'lucide-react';
+import { Lock, Key } from 'lucide-react';
 
 const SecuritySettings = ({ user, handleCheckboxChange }) => {
   return (
@@ -11,27 +11,6 @@ const SecuritySettings = ({ user, handleCheckboxChange }) => {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: '#f8fafc', borderRadius: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ background: '#e2e8f0', padding: '0.5rem', borderRadius: '12px' }}>
-              <Smartphone size={20} color="#475569" />
-            </div>
-            <div>
-              <p style={{ margin: 0, fontWeight: '700', color: '#0f172a', fontSize: '0.95rem' }}>İki Aşamalı Doğrulama (2FA)</p>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Hesabınızı korumak için ekstra bir güvenlik katmanı ekleyin.</p>
-            </div>
-          </div>
-          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-            <input 
-              type="checkbox" 
-              name="twoFactorEnabled" 
-              checked={user.twoFactorEnabled || false} 
-              onChange={handleCheckboxChange} 
-              style={{ width: '20px', height: '20px', accentColor: '#0f172a' }} 
-            />
-          </label>
-        </div>
-
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: '#f8fafc', borderRadius: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ background: '#e2e8f0', padding: '0.5rem', borderRadius: '12px' }}>

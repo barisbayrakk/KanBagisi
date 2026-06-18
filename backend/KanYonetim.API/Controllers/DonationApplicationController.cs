@@ -43,6 +43,32 @@ namespace KanYonetim.API.Controllers
                 };
 
             _context.DonationApplications.Add(application);
+
+            // Log activity
+            try
+            {
+                var reqInfo = await _context.DonationRequests
+                    .Include(r => r.BloodType)
+                    .FirstOrDefaultAsync(r => r.Id == requestId);
+                string bloodType = reqInfo?.BloodType?.Name ?? "";
+                string desc = string.IsNullOrEmpty(bloodType) 
+                    ? "Yeni kan talebine başvurdun." 
+                    : $"{bloodType} kan bağışı talebine başvurdun.";
+
+                var activityLog = new ProfileActivityLog
+                {
+                    UserId = userId,
+                    ActionType = "DonationApplied",
+                    Description = desc,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.ProfileActivityLogs.Add(activityLog);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Activity Log Error] Failed to log donation application activity: {ex.Message}");
+            }
+
             await _context.SaveChangesAsync();
             return Ok(application);
         }
@@ -83,6 +109,42 @@ namespace KanYonetim.API.Controllers
                 {
                     application.Donor.LastDonationDate = DateTime.UtcNow;
                 }
+
+                // Log activity
+                try
+                {
+                    var activityLog = new ProfileActivityLog
+                    {
+                        UserId = application.DonorId,
+                        ActionType = "DonationApproved",
+                        Description = "Kan bağışınız başarıyla tamamlandı ve onaylandı.",
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.ProfileActivityLogs.Add(activityLog);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Activity Log Error] Failed to log donation approval activity: {ex.Message}");
+                }
+            }
+            else if (status == "Rejected")
+            {
+                // Log activity
+                try
+                {
+                    var activityLog = new ProfileActivityLog
+                    {
+                        UserId = application.DonorId,
+                        ActionType = "DonationRejected",
+                        Description = "Kan bağışı başvurunuz reddedildi.",
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.ProfileActivityLogs.Add(activityLog);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Activity Log Error] Failed to log donation rejection activity: {ex.Message}");
+                }
             }
 
             await _context.SaveChangesAsync();
@@ -121,6 +183,23 @@ namespace KanYonetim.API.Controllers
                 Description = $"Bağış başarıyla hastane tarafından doğrulandı. Protokol: {dto.ProtocolNumber}, Kod: {dto.VerificationCode}",
                 CreatedAt = DateTime.UtcNow
             });
+
+            // Log activity
+            try
+            {
+                var activityLog = new ProfileActivityLog
+                {
+                    UserId = application.DonorId,
+                    ActionType = "DonationApproved",
+                    Description = "Kan bağışınız başarıyla tamamlandı ve onaylandı.",
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.ProfileActivityLogs.Add(activityLog);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Activity Log Error] Failed to log donation verification activity: {ex.Message}");
+            }
 
             await _context.SaveChangesAsync();
             return Ok(new { Message = "Kan bağışı başarıyla doğrulandı." });

@@ -23,7 +23,7 @@ const RequestApprovals = () => {
           id: a.id,
           hospitalName: a.alertHospital,
           bloodTypeName: a.alertBlood,
-          status: a.isApproved ? 'Approved' : 'Pending'
+          status: a.status === 'Rejected' ? 'Rejected' : (a.isApproved ? 'Approved' : 'Pending')
         }));
         setApprovals(mappedApps);
       } else {

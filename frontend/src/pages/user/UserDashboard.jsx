@@ -87,7 +87,7 @@ const UserDashboard = ({ user }) => {
     district: user?.district || 'Fatih',
     hospital: '',
     bloodType: user?.bloodType || 'A+',
-    urgency: 'Yüksek (Acil)',
+    urgency: 'Acil',
     note: ''
   });
 
@@ -282,6 +282,7 @@ const UserDashboard = ({ user }) => {
   };
 
   const latestDonationDate = getLatestDonation();
+  const hasDonated = latestDonationDate && latestDonationDate !== 'Kayıt Bulunmuyor';
 
   const getResolvedEligibility = () => {
     if (latestDonationDate && latestDonationDate !== 'Kayıt Bulunmuyor') {
@@ -506,13 +507,13 @@ const UserDashboard = ({ user }) => {
                     alignItems: 'center',
                     gap: '0.5rem'
                   }}>
-                    <CheckCircle size={18} fill="#22c55e" color="white" /> Yeniden Bağış İçin Uygun
+                    <CheckCircle size={18} fill="#22c55e" color="white" /> {hasDonated ? 'Yeniden Bağış İçin Uygun' : 'Bağış İçin Uygun'}
                   </div>
                   <span style={{ fontSize: '0.95rem', fontWeight: '800', color: '#166534', lineHeight: 1.4 }}>
-                    Tebrikler! Yeniden hayat kurtarmaya hazırsınız.
+                    {hasDonated ? 'Tebrikler! Yeniden hayat kurtarmaya hazırsınız.' : 'Tebrikler! Hayat kurtarmaya hazırsınız.'}
                   </span>
                   <button 
-                    onClick={() => toast.success('Tebrikler, yeniden bağış yapmaya hazırsınız!', { icon: '❤️' })}
+                    onClick={() => toast.success(hasDonated ? 'Tebrikler, yeniden bağış yapmaya hazırsınız!' : 'Tebrikler, bağış yapmaya hazırsınız!', { icon: '❤️' })}
                     style={{ 
                       alignSelf: 'flex-start',
                       background: 'rgba(34, 197, 94, 0.08)', 
@@ -888,7 +889,7 @@ const UserDashboard = ({ user }) => {
               nearbyRequests.map((req) => (
                 <div key={req.id} style={{ display: 'flex', alignItems: 'center', padding: '0.75rem 1rem', border: '1px solid #f1f5f9', borderRadius: '8px', backgroundColor: '#ffffff', transition: 'border-color 0.2s' }} className="request-list-item">
                   <div style={{ 
-                    backgroundColor: req.urgencyLevel === 'Kritik' || req.urgencyLevel === 'Acil' ? '#fef2f2' : '#f5f3ff', 
+                    backgroundColor: req.urgencyLevel === 'Kritik' ? '#fef2f2' : (req.urgencyLevel === 'Acil' ? '#fff7ed' : '#f1f5f9'), 
                     width: '44px', 
                     height: '44px', 
                     borderRadius: '12px', 
@@ -898,9 +899,17 @@ const UserDashboard = ({ user }) => {
                     justifyContent: 'center',
                     flexShrink: 0
                   }}>
-                    <Droplet size={14} fill={req.urgencyLevel === 'Kritik' || req.urgencyLevel === 'Acil' ? '#991b1b' : '#8b5cf6'} color={req.urgencyLevel === 'Kritik' || req.urgencyLevel === 'Acil' ? '#991b1b' : '#8b5cf6'} />
-                    <span style={{ fontSize: '0.55rem', fontWeight: '800', color: req.urgencyLevel === 'Kritik' || req.urgencyLevel === 'Acil' ? '#991b1b' : '#8b5cf6', marginTop: '2px' }}>
-                      {req.urgencyLevel === 'Kritik' || req.urgencyLevel === 'Acil' ? 'Acil' : 'Orta'}
+                    <Droplet size={14} 
+                      fill={req.urgencyLevel === 'Kritik' ? '#991b1b' : (req.urgencyLevel === 'Acil' ? '#c2410c' : '#475569')} 
+                      color={req.urgencyLevel === 'Kritik' ? '#991b1b' : (req.urgencyLevel === 'Acil' ? '#c2410c' : '#475569')} 
+                    />
+                    <span style={{ 
+                      fontSize: '0.52rem', 
+                      fontWeight: '800', 
+                      color: req.urgencyLevel === 'Kritik' ? '#991b1b' : (req.urgencyLevel === 'Acil' ? '#c2410c' : '#475569'), 
+                      marginTop: '2px' 
+                    }}>
+                      {req.urgencyLevel}
                     </span>
                   </div>
 
@@ -928,12 +937,12 @@ const UserDashboard = ({ user }) => {
               [
                 { blood: 'O Rh(-)', hospital: 'Kadıköy Acıbadem Hastanesi', dist: '2.1 km', urgency: 'Acil' },
                 { blood: 'B+', hospital: 'Çekmeköy Devlet Hastanesi', dist: '3.4 km', urgency: 'Acil' },
-                { blood: 'A+', hospital: 'Kartal Eğitim Araştırma Hastanesi', dist: '4.8 km', urgency: 'Orta' },
-                { blood: 'AB+', hospital: 'Ümraniye Eğitim Araştırma Hastanesi', dist: '5.2 km', urgency: 'Bekliyor' }
+                { blood: 'A+', hospital: 'Kartal Eğitim Araştırma Hastanesi', dist: '4.8 km', urgency: 'Normal' },
+                { blood: 'AB+', hospital: 'Ümraniye Eğitim Araştırma Hastanesi', dist: '5.2 km', urgency: 'Kritik' }
               ].map((fallback, idx) => (
                 <div key={idx} style={{ display: 'flex', alignItems: 'center', padding: '0.75rem 1rem', border: '1px solid #f1f5f9', borderRadius: '8px', backgroundColor: '#ffffff' }} className="request-list-item">
                   <div style={{ 
-                    backgroundColor: fallback.urgency === 'Acil' ? '#fef2f2' : fallback.urgency === 'Orta' ? '#fffbeb' : '#eff6ff', 
+                    backgroundColor: fallback.urgency === 'Kritik' ? '#fef2f2' : (fallback.urgency === 'Acil' ? '#fff7ed' : '#f1f5f9'), 
                     width: '44px', 
                     height: '44px', 
                     borderRadius: '12px', 
@@ -943,8 +952,16 @@ const UserDashboard = ({ user }) => {
                     justifyContent: 'center',
                     flexShrink: 0
                   }}>
-                    <Droplet size={14} fill={fallback.urgency === 'Acil' ? '#991b1b' : fallback.urgency === 'Orta' ? '#d97706' : '#2563eb'} color={fallback.urgency === 'Acil' ? '#991b1b' : fallback.urgency === 'Orta' ? '#d97706' : '#2563eb'} />
-                    <span style={{ fontSize: '0.55rem', fontWeight: '800', color: fallback.urgency === 'Acil' ? '#991b1b' : fallback.urgency === 'Orta' ? '#d97706' : '#2563eb', marginTop: '2px' }}>
+                    <Droplet size={14} 
+                      fill={fallback.urgency === 'Kritik' ? '#991b1b' : (fallback.urgency === 'Acil' ? '#c2410c' : '#475569')} 
+                      color={fallback.urgency === 'Kritik' ? '#991b1b' : (fallback.urgency === 'Acil' ? '#c2410c' : '#475569')} 
+                    />
+                    <span style={{ 
+                      fontSize: '0.52rem', 
+                      fontWeight: '800', 
+                      color: fallback.urgency === 'Kritik' ? '#991b1b' : (fallback.urgency === 'Acil' ? '#c2410c' : '#475569'), 
+                      marginTop: '2px' 
+                    }}>
                       {fallback.urgency}
                     </span>
                   </div>
@@ -1030,43 +1047,11 @@ const UserDashboard = ({ user }) => {
                 </div>
               ))
             ) : (
-              // Fallback mock timeline
-              [
-                { desc: 'Profil bilgileri güncellendi', time: new Date(Date.now() - 2 * 60 * 60 * 1000) },
-                { desc: 'E-posta adresi doğrulandı', time: new Date(Date.now() - 5 * 60 * 60 * 1000) },
-                { desc: 'Kan grubu bilgisi güncellendi', time: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-                { desc: 'Bildirim tercihleri güncellendi', time: new Date(Date.now() - 48 * 60 * 60 * 1000) },
-                { desc: 'Yeni kan talebine başvurdun', time: new Date(Date.now() - 72 * 60 * 60 * 1000) }
-              ].map((fallback, idx) => (
-                <div key={idx} style={{ display: 'flex', gap: '0.85rem', position: 'relative' }}>
-                  {idx !== 4 && (
-                    <div style={{ position: 'absolute', top: '22px', left: '9px', bottom: '-22px', width: '2px', backgroundColor: '#f1f5f9' }} />
-                  )}
-                  <div style={{ 
-                    width: '20px', 
-                    height: '20px', 
-                    borderRadius: '50%', 
-                    backgroundColor: idx === 4 ? '#ecfdf5' : '#fef2f2', 
-                    border: idx === 4 ? '2px solid #10b981' : '2px solid #991b1b', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    zIndex: 2
-                  }}>
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: idx === 4 ? '#10b981' : '#991b1b' }} />
-                  </div>
-
-                  <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#334155', fontWeight: '600', lineHeight: 1.3 }}>
-                      {fallback.desc}
-                    </p>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem', display: 'block' }}>
-                      {getRelativeTime(fallback.time)}
-                    </span>
-                  </div>
-                </div>
-              ))
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem 1rem', color: '#94a3b8', textAlign: 'center', height: '100%' }}>
+                <Clock size={32} style={{ marginBottom: '0.75rem', strokeWidth: 1.5, color: '#cbd5e1' }} />
+                <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: '600', color: '#64748b' }}>Henüz bir aktivite bulunmuyor.</p>
+                <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.7rem', color: '#94a3b8', maxWidth: '200px', lineHeight: 1.4 }}>Profilinizi güncellediğinizde veya bağış yaptığınızda burada görünecektir.</p>
+              </div>
             )}
           </div>
         </div>

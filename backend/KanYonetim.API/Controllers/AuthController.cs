@@ -52,6 +52,24 @@ namespace KanYonetim.API.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
+            // Log activity
+            try
+            {
+                var activityLog = new ProfileActivityLog
+                {
+                    UserId = user.Id,
+                    ActionType = "Register",
+                    Description = "Hesap oluşturuldu.",
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.ProfileActivityLogs.Add(activityLog);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Activity Log Error] Failed to log registration activity: {ex.Message}");
+            }
+
             // Send Email
             var emailBody = $@"
                 <h2>Hayat Ağı - Kan Yönetim Sistemi</h2>
@@ -59,7 +77,19 @@ namespace KanYonetim.API.Controllers
                 <p>Kayıt işleminizi tamamlamak için doğrulama kodunuz:</p>
                 <h1 style='letter-spacing: 5px; color: #e11d48;'>{verificationCode}</h1>
             ";
-            await _emailService.SendEmailAsync(user.Email, "E-Posta Doğrulama Kodu", emailBody);
+            try
+            {
+                await _emailService.SendEmailAsync(user.Email, "E-Posta Doğrulama Kodu", emailBody);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Email Error] Failed to send verification email to {user.Email}: {ex.Message}");
+            }
+
+            // Print verification code to console for local development testing
+            Console.WriteLine($"\n==================================================");
+            Console.WriteLine($"[DEVELOPMENT] E-Posta Dogrulama Kodu: {verificationCode}");
+            Console.WriteLine($"==================================================\n");
 
             return new AuthResponseDto
             {
@@ -120,6 +150,24 @@ namespace KanYonetim.API.Controllers
 
             user.IsEmailVerified = true;
             user.EmailVerificationCode = null;
+
+            // Log activity
+            try
+            {
+                var activityLog = new ProfileActivityLog
+                {
+                    UserId = user.Id,
+                    ActionType = "EmailVerified",
+                    Description = "E-posta adresi doğrulandı.",
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.ProfileActivityLogs.Add(activityLog);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Activity Log Error] Failed to log email verification activity: {ex.Message}");
+            }
+
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "E-posta başarıyla doğrulandı." });

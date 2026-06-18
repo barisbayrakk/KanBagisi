@@ -93,8 +93,23 @@ const Profile = ({ user: globalUser, setUser: setGlobalUser }) => {
 
       const res = await axios.put('/User/profile', payload);
       
+      const ISTANBUL_ILCELER = [
+        'Adalar', 'Arnavutköy', 'Ataşehir', 'Avcılar', 'Bağcılar', 'Bahçelievler', 'Bakırköy', 'Başakşehir',
+        'Bayrampaşa', 'Beşiktaş', 'Beykoz', 'Beylikdüzü', 'Beyoğlu', 'Büyükçekmece', 'Çatalca', 'Çekmeköy',
+        'Esenler', 'Esenyurt', 'Eyüpsultan', 'Fatih', 'Gaziosmanpaşa', 'Güngören', 'Kadıköy', 'Kağıthane',
+        'Kartal', 'Küçükçekmece', 'Maltepe', 'Pendik', 'Sancaktepe', 'Sarıyer', 'Silivri', 'Sultanbeyli',
+        'Sultangazi', 'Şile', 'Şişli', 'Tuzla', 'Ümraniye', 'Üsküdar', 'Zeytinburnu'
+      ];
+      const KAN_GRUPLARI = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-'];
+
       // Update global user state slightly so UI stays in sync
-      const updatedGlobalUser = { ...globalUser, ...payload, profileCompletionRate: res.data.completionRate };
+      const updatedGlobalUser = { 
+        ...globalUser, 
+        ...payload, 
+        bloodType: KAN_GRUPLARI[payload.bloodTypeId - 1] || globalUser.bloodType,
+        district: ISTANBUL_ILCELER[payload.districtId - 1] || globalUser.district,
+        profileCompletionRate: res.data.completionRate 
+      };
       setGlobalUser(updatedGlobalUser);
       localStorage.setItem('user', JSON.stringify(updatedGlobalUser));
 

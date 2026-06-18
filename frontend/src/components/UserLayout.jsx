@@ -11,7 +11,6 @@ import {
   Search, 
   ChevronDown, 
   History, 
-  Star, 
   ChevronRight, 
   PhoneCall, 
   AlertTriangle,
@@ -29,7 +28,6 @@ const UserLayout = ({ children, user, setUser }) => {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [activeRequestsCount, setActiveRequestsCount] = useState(0);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
-  const [showFavoritesModal, setShowFavoritesModal] = useState(false);
   const [myApplications, setMyApplications] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -278,7 +276,7 @@ const UserLayout = ({ children, user, setUser }) => {
       const mappedApps = userApps.map(a => ({
         id: a.id,
         applicationDate: a.date,
-        status: a.status === 'Approved' ? 'Approved' : 'Pending',
+        status: a.status === 'Approved' || a.isApproved ? 'Approved' : (a.status === 'Rejected' ? 'Rejected' : 'Pending'),
         donationRequest: {
           bloodType: { name: a.alertBlood || a.bloodTypeName },
           hospital: { name: a.alertHospital || a.hospitalName }
@@ -337,7 +335,6 @@ const UserLayout = ({ children, user, setUser }) => {
       onClick: () => setShowHistoryModal(true), 
       icon: <History size={20} /> 
     },
-    { name: 'Favorilerim', onClick: () => setShowFavoritesModal(true), icon: <Star size={20} /> },
     { name: 'Profilim', path: '/profile', icon: <User size={20} /> },
     { name: 'Destek Talepleri', path: '/support', icon: <HelpCircle size={20} /> },
     { name: 'Kan Uyum Rehberi', path: '/compatibility-guide', icon: <BookOpen size={20} /> }
@@ -482,22 +479,6 @@ const UserLayout = ({ children, user, setUser }) => {
 
         {/* Sidebar Footer Banners */}
         <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: '1px solid #1e293b' }}>
-          {/* Emergency Box */}
-          <div style={{ backgroundColor: 'rgba(153, 27, 27, 0.1)', borderRadius: '8px', padding: '1rem', border: '1px solid rgba(153, 27, 27, 0.2)' }}>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-              <AlertTriangle size={18} style={{ color: '#f43f5e', flexShrink: 0 }} />
-              <div>
-                <h4 style={{ fontSize: '0.8rem', fontWeight: '800', color: '#fca5a5', margin: 0 }}>Acil Durumda mısınız?</h4>
-                <p style={{ fontSize: '0.7rem', color: '#fca5a5', margin: '0.1rem 0 0 0', lineHeight: 1.3 }}>En yakın kan merkezine hemen ulaşın.</p>
-              </div>
-            </div>
-            <button 
-              onClick={() => { toast.success('Mevcut konumunuz algılanıyor...'); navigate('/blood-requests'); }}
-              style={{ width: '100%', border: 'none', backgroundColor: '#991b1b', color: 'white', fontSize: '0.75rem', fontWeight: '700', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 2px 6px rgba(225,29,72,0.15)' }}
-            >
-              Konumumu Aç
-            </button>
-          </div>
 
           {/* Slogan Banner */}
           <div style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', borderRadius: '8px', padding: '1rem', position: 'relative', overflow: 'hidden' }}>
@@ -847,56 +828,7 @@ const UserLayout = ({ children, user, setUser }) => {
         </div>
       )}
 
-      {/* FAVORITES MODAL */}
-      {showFavoritesModal && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(15,23,42,0.4)', backdropFilter: 'blur(4px)', zIndex: 9999,
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
-        }}>
-          <div style={{
-            background: '#ffffff', padding: '2rem', borderRadius: '10px',
-            maxWidth: '500px', width: '90%', maxHeight: '60vh', overflowY: 'auto',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid #e2e8f0',
-            display: 'flex', flexDirection: 'column'
-          }} className="animate-in">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Star size={24} style={{ color: '#991b1b' }} fill="#991b1b" />
-                <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0f172a', margin: 0 }}>Favori Merkezlerim</h3>
-              </div>
-              <button onClick={() => setShowFavoritesModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
-                <X size={24} />
-              </button>
-            </div>
 
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }} className="custom-scrollbar">
-              {/* Sample favorites centers */}
-              {[
-                { name: 'Çekmeköy Kızılay Bağış Merkezi', district: 'Çekmeköy', phone: '0216 123 45 67' },
-                { name: 'Kadıköy Kızılay Kan Bağış Merkezi', district: 'Kadıköy', phone: '0216 987 65 43' }
-              ].map((center, idx) => (
-                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1rem', border: '1px solid #f1f5f9', borderRadius: '8px', background: '#f8fafc' }}>
-                  <div>
-                    <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: '800', color: '#0f172a' }}>{center.name}</h4>
-                    <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>{center.district}</span>
-                  </div>
-                  <a href={`tel:${center.phone}`} style={{ backgroundColor: '#eff6ff', color: '#2563eb', border: 'none', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                    <PhoneCall size={16} />
-                  </a>
-                </div>
-              ))}
-            </div>
-
-            <button 
-              onClick={() => setShowFavoritesModal(false)}
-              style={{ width: '100%', border: 'none', backgroundColor: '#334155', color: 'white', fontWeight: '800', padding: '0.75rem', borderRadius: '12px', marginTop: '1.5rem', cursor: 'pointer' }}
-            >
-              Kapat
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Global Embedded CSS styles */}
       <style dangerouslySetInnerHTML={{__html: `

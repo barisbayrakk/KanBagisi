@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
 import { Toaster, toast } from 'react-hot-toast'
-import { Droplets, Heart, LayoutDashboard, LogOut, User, Menu, X, PlusCircle, Activity, MapPin, Calendar, ArrowRight, Settings, Users, Shield, UserRound, Search, Mail, Phone, Filter, TrendingUp, TrendingDown, Truck, CheckCircle, AlertTriangle, RefreshCw, Bell, Trash2, Eye, EyeOff } from 'lucide-react'
+import { Droplets, Heart, LayoutDashboard, LogOut, User, Menu, X, PlusCircle, Activity, MapPin, Calendar, ArrowRight, Settings, Users, Shield, UserRound, Search, Mail, Phone, Filter, TrendingUp, TrendingDown, Truck, CheckCircle, AlertTriangle, RefreshCw, Bell, Trash2, Eye, EyeOff, XCircle } from 'lucide-react'
 import axios from 'axios'
 import AdminDashboardOverview from './pages/admin/AdminDashboardOverview';
 import UserManagement from './pages/admin/UserManagement';
@@ -84,12 +84,21 @@ const getInitialStockData = () => {
 
 const getInitialStockAlerts = () => {
   try {
+    if (localStorage.getItem('urgency_v7') !== 'true') {
+      localStorage.removeItem('stockAlerts');
+      sessionStorage.removeItem('filterUrgency');
+      localStorage.setItem('urgency_v7', 'true');
+    }
+  } catch (e) {}
+
+  try {
     const data = localStorage.getItem('stockAlerts');
     if (data) {
       const parsed = JSON.parse(data);
       if (parsed && parsed.length > 0) {
-        const updatedParsed = parsed.map(p => ({
+        const updatedParsed = parsed.map((p, index) => ({
           ...p,
+          id: p.id || (Date.now() + index),
           protocolNumber: p.protocolNumber || `PRT-${Math.floor(10000 + Math.random() * 90000)}`
         }));
         localStorage.setItem('stockAlerts', JSON.stringify(updatedParsed));
@@ -918,6 +927,8 @@ const MyRequests = ({ user }) => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                       {app.isApproved ? (
                          <span style={{ background: '#f0fdf4', color: '#16a34a', padding: '0.3rem 0.6rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><CheckCircle size={14}/> KAN VERİLDİ / ONAYLANDI</span>
+                      ) : app.status === 'Rejected' ? (
+                         <span style={{ background: '#fef2f2', color: '#ef4444', padding: '0.3rem 0.6rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><XCircle size={14}/> BAŞVURU REDDEDİLDİ / İPTAL</span>
                       ) : (
                          <span style={{ background: '#fffbeb', color: '#d97706', padding: '0.3rem 0.6rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><AlertTriangle size={14}/> ⏳ Hastaneye gidip kan vermeniz bekleniyor</span>
                       )}
@@ -943,7 +954,7 @@ const MyRequests = ({ user }) => {
                   )}
                 </div>
 
-                {!app.isApproved && (
+                {!app.isApproved && app.status !== 'Rejected' && (
                   <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '1.5rem', border: '1px dashed #cbd5e1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                     <div>
                       <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>Protokol Numarası</p>
@@ -1169,15 +1180,43 @@ const KanTalepleri = ({ user }) => {
   const [alerts, setAlerts] = useState(() => {
     return getInitialStockAlerts();
   });
-  const [filterUrgency, setFilterUrgency] = useState('Tümü');
-  const [filterBlood, setFilterBlood] = useState('Tümü');
-  const [filterSource, setFilterSource] = useState('Tümü');
-  const [filterDistrict, setFilterDistrict] = useState('Tümü');
-  const [filterDistance, setFilterDistance] = useState('Tümü');
-  const [filterTime, setFilterTime] = useState('Tümü');
-  const [search, setSearch] = useState('');
+  const [filterUrgency, setFilterUrgency] = useState(() => sessionStorage.getItem('filterUrgency') || 'Tümü');
+  const [filterBlood, setFilterBlood] = useState(() => sessionStorage.getItem('filterBlood') || 'Tümü');
+  const [filterSource, setFilterSource] = useState(() => sessionStorage.getItem('filterSource') || 'Tümü');
+  const [filterDistrict, setFilterDistrict] = useState(() => sessionStorage.getItem('filterDistrict') || 'Tümü');
+  const [filterDistance, setFilterDistance] = useState(() => sessionStorage.getItem('filterDistance') || 'Tümü');
+  const [filterTime, setFilterTime] = useState(() => sessionStorage.getItem('filterTime') || 'Tümü');
+  const [search, setSearch] = useState(() => sessionStorage.getItem('filterSearch') || '');
 
-  const handleApply = (alert) => {
+  useEffect(() => {
+    sessionStorage.setItem('filterUrgency', filterUrgency);
+  }, [filterUrgency]);
+
+  useEffect(() => {
+    sessionStorage.setItem('filterBlood', filterBlood);
+  }, [filterBlood]);
+
+  useEffect(() => {
+    sessionStorage.setItem('filterSource', filterSource);
+  }, [filterSource]);
+
+  useEffect(() => {
+    sessionStorage.setItem('filterDistrict', filterDistrict);
+  }, [filterDistrict]);
+
+  useEffect(() => {
+    sessionStorage.setItem('filterDistance', filterDistance);
+  }, [filterDistance]);
+
+  useEffect(() => {
+    sessionStorage.setItem('filterTime', filterTime);
+  }, [filterTime]);
+
+  useEffect(() => {
+    sessionStorage.setItem('filterSearch', search);
+  }, [search]);
+
+  const handleApply = async (alert) => {
     if (alert.requesterTc === user.tc) {
       toast.error('Kendi talebinize başvuru yapamazsınız.');
       return;
@@ -1255,10 +1294,25 @@ const KanTalepleri = ({ user }) => {
       return;
     }
 
-    const verificationCode = `DONOR-${Math.floor(1000 + Math.random() * 9000)}`;
+    let dbAppId = null;
+    let verificationCode = `DONOR-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    try {
+      // Map front-end alert.id to database request ID 1-25 if alert.id is a large timestamp
+      const dbRequestId = alert.id > 1000000 ? (Math.abs(Number(alert.id)) % 25) + 1 : alert.id;
+      const response = await axios.post(`/DonationApplication?requestId=${dbRequestId}`);
+      if (response.data) {
+        dbAppId = response.data.id;
+        if (response.data.verificationCode) {
+          verificationCode = response.data.verificationCode;
+        }
+      }
+    } catch (e) {
+      console.error('Error posting to DonationApplication API:', e);
+    }
 
     const newApp = {
-      id: Date.now(),
+      id: dbAppId || Date.now(),
       alertId: alert.id,
       protocolNumber: alert.protocolNumber,
       verificationCode: verificationCode,
@@ -1310,14 +1364,40 @@ const KanTalepleri = ({ user }) => {
 
   const KAN_GRUPLARI_ALL = ['0+', '0-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'];
 
+  const normalizeDate = (dateVal) => {
+    if (!dateVal) return '';
+    if (dateVal instanceof Date) {
+      return `${String(dateVal.getDate()).padStart(2, '0')}.${String(dateVal.getMonth() + 1).padStart(2, '0')}.${dateVal.getFullYear()}`;
+    }
+    let s = String(dateVal).replace(/\//g, '.');
+    if (s.includes('-')) {
+      const parts = s.split('T')[0].split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}.${parts[1]}.${parts[0]}`;
+      }
+    }
+    return s;
+  };
+
   const filtered = alerts.filter(a => {
-    const matchUrgency = filterUrgency === 'Tümü' || a.urgency === filterUrgency;
+    let matchUrgency = false;
+    if (filterUrgency === 'Tümü') {
+      matchUrgency = true;
+    } else {
+      let itemUrgency = (a.urgency || '').trim();
+      if (itemUrgency === 'Yüksek (Acil)') itemUrgency = 'Kritik';
+      if (itemUrgency === 'Orta') itemUrgency = 'Acil';
+      if (itemUrgency === 'Düşük') itemUrgency = 'Normal';
+      
+      matchUrgency = itemUrgency.toLowerCase() === filterUrgency.trim().toLowerCase();
+    }
+      
     const matchBlood = filterBlood === 'Tümü' || a.bloodType === filterBlood;
     const matchSearch = search === '' ||
       a.hastane?.toLowerCase().includes(search.toLowerCase()) ||
       a.ilce?.toLowerCase().includes(search.toLowerCase());
 
-    const isHospital = a.autoGenerated !== false;
+    const isHospital = a.autoGenerated === true || a.requestType === 'Hastane Talebi' || a.requester === 'Hastane Yönetimi';
     const canDonate = user?.bloodType ? (BLOOD_COMPATIBILITY[user.bloodType] || []).includes(a.bloodType) : true;
 
     const matchSource = filterSource === 'Tümü' ||
@@ -1342,8 +1422,8 @@ const KanTalepleri = ({ user }) => {
       const now = Date.now();
       const ageMs = now - a.id;
       if (filterTime === '1s') matchTime = ageMs <= 3600000;
-      else if (filterTime === 'Bugün') matchTime = a.date === new Date().toLocaleDateString('tr-TR');
-      else if (filterTime === 'Eski') matchTime = a.date !== new Date().toLocaleDateString('tr-TR');
+      else if (filterTime === 'Bugün') matchTime = normalizeDate(a.date) === normalizeDate(new Date());
+      else if (filterTime === 'Eski') matchTime = normalizeDate(a.date) !== normalizeDate(new Date());
     }
 
     return matchUrgency && matchBlood && matchSearch && matchSource && matchDistrict && matchDistance && matchTime;
@@ -1456,9 +1536,9 @@ const KanTalepleri = ({ user }) => {
           style={{ padding: '0.65rem 1rem', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#f8fafc', fontSize: '0.88rem', fontWeight: '600', color: '#0f172a', outline: 'none', cursor: 'pointer' }}
         >
           <option value="Tümü">Tüm Aciliyetler</option>
-          <option value="Yüksek (Acil)">Yüksek (Acil)</option>
-          <option value="Orta">Orta</option>
-          <option value="Düşük">Düşük</option>
+          <option value="Kritik">Kritik</option>
+          <option value="Acil">Acil</option>
+          <option value="Normal">Normal</option>
         </select>
         {/* Kan Grubu Filtresi */}
         <select
@@ -1523,9 +1603,9 @@ const KanTalepleri = ({ user }) => {
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
-          {filtered.map((alert) => (
+          {filtered.map((alert, index) => (
             <div
-              key={alert.id}
+              key={`${alert.id}-${index}`}
               className="card relative overflow-hidden"
               style={{
                 background: '#ffffff',
@@ -1549,28 +1629,37 @@ const KanTalepleri = ({ user }) => {
                   <span style={{
                     fontSize: '0.65rem',
                     fontWeight: '800',
-                    background: alert.autoGenerated === false ? '#eff6ff' : '#fef2f2',
-                    color: alert.autoGenerated === false ? '#2563eb' : '#991b1b',
+                    background: (alert.autoGenerated === true || alert.requestType === 'Hastane Talebi' || alert.requester === 'Hastane Yönetimi') ? '#fef2f2' : '#eff6ff',
+                    color: (alert.autoGenerated === true || alert.requestType === 'Hastane Talebi' || alert.requester === 'Hastane Yönetimi') ? '#991b1b' : '#2563eb',
                     padding: '0.25rem 0.6rem',
                     borderRadius: '8px',
                     textTransform: 'uppercase',
                     width: 'fit-content'
                   }}>
-                    {alert.autoGenerated === false ? '👤 Vatandaş' : '🏥 Hastane'}
+                    {(alert.autoGenerated === true || alert.requestType === 'Hastane Talebi' || alert.requester === 'Hastane Yönetimi') ? '🏥 Hastane' : '👤 Vatandaş'}
                   </span>
-                  <span style={{
-                    fontSize: '0.72rem',
-                    fontWeight: '800',
-                    background: alert.urgency === 'Yüksek (Acil)' ? '#fef2f2' : '#fef3c7',
-                    color: alert.urgency === 'Yüksek (Acil)' ? '#991b1b' : '#d97706',
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '10px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    width: 'fit-content'
-                  }}>
-                    {alert.urgency === 'Yüksek (Acil)' ? '🚨 ACİL' : alert.urgency}
-                  </span>
+                  {(() => {
+                    let displayUrgency = (alert.urgency || '').trim();
+                    if (displayUrgency === 'Yüksek (Acil)') displayUrgency = 'Kritik';
+                    if (displayUrgency === 'Orta') displayUrgency = 'Acil';
+                    if (displayUrgency === 'Düşük') displayUrgency = 'Normal';
+
+                    return (
+                      <span style={{
+                        fontSize: '0.72rem',
+                        fontWeight: '800',
+                        background: displayUrgency === 'Kritik' ? '#fef2f2' : (displayUrgency === 'Acil' ? '#fff7ed' : '#f1f5f9'),
+                        color: displayUrgency === 'Kritik' ? '#991b1b' : (displayUrgency === 'Acil' ? '#c2410c' : '#475569'),
+                        padding: '0.35rem 0.75rem',
+                        borderRadius: '10px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        width: 'fit-content'
+                      }}>
+                        {displayUrgency === 'Kritik' ? '🚨 KRİTİK' : (displayUrgency === 'Acil' ? '⚡ ACİL' : '📋 NORMAL')}
+                      </span>
+                    );
+                  })()}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem', color: '#94a3b8', fontWeight: '600' }}>
                   <Activity size={13} />
@@ -2197,7 +2286,7 @@ const BloodRequestCreate = ({ user }) => {
     district: user?.district || 'Fatih',
     hospital: '',
     bloodType: user?.bloodType || 'A+',
-    urgency: 'Yüksek (Acil)',
+    urgency: 'Acil',
     note: ''
   });
 
@@ -2264,6 +2353,14 @@ const BloodRequestCreate = ({ user }) => {
           <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#475569', marginBottom: '0.5rem' }}>Kan Grubu</label>
           <select value={formData.bloodType} onChange={e => setFormData({ ...formData, bloodType: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', fontWeight: '600', outline: 'none' }}>
             {KAN_GRUPLARI.map(k => <option key={k}>{k}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#475569', marginBottom: '0.5rem' }}>Aciliyet</label>
+          <select value={formData.urgency} onChange={e => setFormData({ ...formData, urgency: e.target.value })} style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', fontWeight: '600', outline: 'none' }}>
+            <option value="Normal">Normal</option>
+            <option value="Acil">Acil</option>
+            <option value="Kritik">Kritik</option>
           </select>
         </div>
         <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
@@ -2721,7 +2818,7 @@ const AdminDashboard = ({ user, usersList, setUsersList }) => {
   const [donorBlood, setDonorBlood] = useState('A+');
 
   const [alertBlood, setAlertBlood] = useState('0+');
-  const [alertUrgency, setAlertUrgency] = useState('Yüksek (Acil)');
+  const [alertUrgency, setAlertUrgency] = useState('Acil');
   const [alertIlce, setAlertIlce] = useState('Fatih');
 
   const triggerAutoAlert = (ilce, kg, count) => {
@@ -2734,7 +2831,7 @@ const AdminDashboard = ({ user, usersList, setUsersList }) => {
         const newAlert = {
           id: Date.now() + Math.random(),
           bloodType: kg,
-          urgency: 'Yüksek (Acil)',
+          urgency: 'Kritik',
           ilce: ilce,
           hastane: getHastane(ilce),
           date: new Date().toLocaleDateString('tr-TR'),
@@ -3086,9 +3183,9 @@ const AdminDashboard = ({ user, usersList, setUsersList }) => {
               <div>
                 <label style={{ ...labelStyle, color: '#9f1239' }}>Aciliyet</label>
                 <select value={alertUrgency} onChange={e => setAlertUrgency(e.target.value)} style={{ ...inputStyle, background: '#ffffff', border: '1px solid #fecdd3', cursor: 'pointer', fontWeight: '700' }}>
-                  <option>Yüksek (Acil)</option>
-                  <option>Orta</option>
-                  <option>Düşük</option>
+                  <option value="Kritik">Kritik</option>
+                  <option value="Acil">Acil</option>
+                  <option value="Normal">Normal</option>
                 </select>
               </div>
               <button type="submit" style={{ background: '#991b1b', color: 'white', border: 'none', borderRadius: '12px', padding: '1rem', fontSize: '0.95rem', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 14px rgba(225,29,72,0.2)', transition: 'all 0.2s', marginTop: '0.5rem' }}>
