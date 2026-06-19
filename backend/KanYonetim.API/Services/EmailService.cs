@@ -29,7 +29,7 @@ namespace KanYonetim.API.Services
 
             var mailMessage = new MailMessage
             {
-                From = new MailAddress(from, "Kan Yönetim Platformu"),
+                From = new MailAddress(from, "Hayat Ağı"),
                 Subject = subject,
                 Body = message,
                 IsBodyHtml = true

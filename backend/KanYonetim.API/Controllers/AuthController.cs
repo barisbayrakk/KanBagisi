@@ -83,15 +83,10 @@ namespace KanYonetim.API.Controllers
             }
 
             // Send Email
-            var emailBody = $@"
-                <h2>Hayat Ağı - Kan Yönetim Sistemi</h2>
-                <p>Merhaba {user.FullName},</p>
-                <p>Kayıt işleminizi tamamlamak için doğrulama kodunuz:</p>
-                <h1 style='letter-spacing: 5px; color: #e11d48;'>{verificationCode}</h1>
-            ";
+            var emailBody = $"<h3>Sisteme Hoş Geldiniz!</h3><p>Kayıt işleminizi tamamlamak için doğrulama kodunuz: <b>{verificationCode}</b></p>";
             try
             {
-                await _emailService.SendEmailAsync(user.Email, "E-Posta Doğrulama Kodu", emailBody);
+                await _emailService.SendEmailAsync(user.Email, "E-posta Doğrulama Kodu", emailBody);
             }
             catch (Exception ex)
             {
