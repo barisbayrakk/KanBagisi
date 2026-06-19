@@ -81,7 +81,7 @@ const UserDashboard = ({ user }) => {
   const [homeStats, setHomeStats] = useState(null);
   const [monthlyStats, setMonthlyStats] = useState([]);
 
-  // Form State for creating quick blood request
+  // Hızlı kan talebi oluşturmak için Form Durumu
   const [formData, setFormData] = useState({
     type: 'Kendim için',
     district: user?.district || 'Fatih',
@@ -95,7 +95,7 @@ const UserDashboard = ({ user }) => {
     setFormData(prev => ({ ...prev, hospital: getHastane(prev.district) }));
   }, [formData.district]);
 
-  // Load Dashboard Data
+  // Kontrol Paneli Verilerini Yükle
   const loadDashboardData = async () => {
     try {
       setLoading(true);
@@ -132,7 +132,7 @@ const UserDashboard = ({ user }) => {
           Talep: item.talep || 0
         }));
       } else {
-        // Fallback: generate last 6 months dynamically based on today's date
+        // Geri dönüş: Bugünün tarihine göre son 6 ayı dinamik olarak oluştur
         const today = new Date();
         for (let i = 5; i >= 0; i--) {
           const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
@@ -146,7 +146,7 @@ const UserDashboard = ({ user }) => {
         }
       }
 
-      // Read local storage approved donations for the logged-in user and increment
+      // Oturum açmış kullanıcı için yerel depolama onaylı bağışları okuyun ve artırın
       const userTc = user?.tc || JSON.parse(localStorage.getItem('kanyonetim_user') || '{}').tc || JSON.parse(localStorage.getItem('user') || '{}').tc;
       if (userTc) {
         try {
@@ -315,7 +315,7 @@ const UserDashboard = ({ user }) => {
 
 
 
-  // Form Submit Handler
+  // Form Gönderme İşleyicisi
   const handleRequestSubmit = async (e) => {
     e.preventDefault();
     const newAlert = {
@@ -333,11 +333,11 @@ const UserDashboard = ({ user }) => {
     };
 
     try {
-      // Save locally to localstorage for instant alerts sync across tabs
+      // Sekmeler arasında anında uyarı senkronizasyonu için yerel olarak localstorage'a kaydedin
       const existing = JSON.parse(localStorage.getItem('stockAlerts') || '[]');
       localStorage.setItem('stockAlerts', JSON.stringify([newAlert, ...existing].slice(0, 50)));
 
-      // Send notifications to compatible donors
+      // Uyumlu bağışçılara bildirim gönder
       const BLOOD_COMPATIBILITY = {
         '0-': ['0-', '0+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'],
         '0+': ['0+', 'A+', 'B+', 'AB+'],
@@ -388,7 +388,7 @@ const UserDashboard = ({ user }) => {
       let notificationCount = 0;
       
       usersList.forEach(u => {
-        // Exclude the requester themselves
+        // Talep edenin kendisini hariç tutun
         const uBt = normalizeBT(u.bloodType);
         const aBt = normalizeBT(formData.bloodType);
         if (u.tc !== user?.tc && (u.role === 'Donor' || u.role === 'Kullanıcı') && uBt && BLOOD_COMPATIBILITY[uBt] && BLOOD_COMPATIBILITY[uBt].includes(aBt)) {
@@ -413,14 +413,14 @@ const UserDashboard = ({ user }) => {
         toast.success('Kan talebiniz oluşturuldu ve platforma iletildi!');
       }
 
-      // Reload lists
+      // Listeleri yeniden yükle
       loadDashboardData();
     } catch (e) {
       toast.error('Talep oluşturulurken bir hata oluştu.');
     }
   };
 
-  // Doughnut Chart Data Formatting
+  // Halka Grafiği Veri Biçimlendirmesi
   const getPieData = () => {
     try {
       const alerts = JSON.parse(localStorage.getItem('stockAlerts') || '[]');
@@ -457,7 +457,7 @@ const UserDashboard = ({ user }) => {
   const pieData = getPieData();
   const totalNeed = pieData.reduce((acc, curr) => acc + curr.value, 0);
 
-  // Sparkline Chart Mock Datasets
+  // Mini Grafik Sahte Veri Kümeleri
   const sparklineData1 = [{ v: 5 }, { v: 8 }, { v: 6 }, { v: 12 }, { v: 9 }, { v: 14 }, { v: 12 }];
   const sparklineData2 = [{ v: 2 }, { v: 4 }, { v: 3 }, { v: 7 }, { v: 5 }, { v: 9 }, { v: 7 }];
   const sparklineData3 = [{ v: 3 }, { v: 3 }, { v: 4 }, { v: 4 }, { v: 4 }, { v: 4 }, { v: 4 }];
@@ -473,7 +473,7 @@ const UserDashboard = ({ user }) => {
     );
   }
 
-  // Format date helper
+  // Tarih yardımcısını biçimlendir
   const formatDate = (dateStr) => {
     if (!dateStr || dateStr === 'Kayıt Bulunmuyor') return 'Kayıt Bulunmuyor';
     let date;
@@ -487,7 +487,7 @@ const UserDashboard = ({ user }) => {
     return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
   };
 
-  // Relative Time Helper
+  // Göreceli Zaman Yardımcısı
   const getRelativeTime = (dateStr) => {
     const date = new Date(dateStr);
     const now = new Date();
@@ -505,10 +505,10 @@ const UserDashboard = ({ user }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem', animation: 'fadeInUp 0.6s ease-out' }}>
       
-      {/* ROW 1: WELCOME */}
+      {/* SATIR 1: HOŞGELDİNİZ */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         
-        {/* Welcome & Eligibility Card */}
+        {/* Hoş Geldiniz ve Uygunluk Kartı */}
         <div style={{
           backgroundColor: '#ffffff',
           borderRadius: '16px',
@@ -532,7 +532,7 @@ const UserDashboard = ({ user }) => {
               </p>
             </div>
             
-            {/* Live Active Requests Badge */}
+            {/* Canlı Aktif İstekler Rozeti */}
             <div style={{ 
               display: 'flex', 
               alignItems: 'center', 
@@ -558,7 +558,7 @@ const UserDashboard = ({ user }) => {
           </div>
 
           <div style={{ display: 'flex', gap: '1.25rem', marginBottom: '1.5rem', flexWrap: 'wrap' }} className="welcome-card-badges">
-            {/* Eligibility Badge */}
+            {/* Uygunluk Rozeti */}
             {resolvedEligibility ? (
               resolvedEligibility.isEligible ? (
                 <div style={{
@@ -684,7 +684,7 @@ const UserDashboard = ({ user }) => {
               </div>
             )}
 
-            {/* Blood Type Box */}
+            {/* Kan Grubu Kutusu */}
             <div style={{
               width: '125px',
               background: 'linear-gradient(135deg, #ef4444 0%, #991b1b 100%)',
@@ -699,7 +699,7 @@ const UserDashboard = ({ user }) => {
               position: 'relative',
               overflow: 'hidden'
             }}>
-              {/* Floating watermark background droplet */}
+              {/* Yüzen filigran arka plan damlacığı */}
               <Droplet 
                 size={70} 
                 style={{ 
@@ -788,7 +788,7 @@ const UserDashboard = ({ user }) => {
 
       </div>
 
-      {/* ROW 1.5: GAMIFICATION (BADGES) */}
+      {/* SIRA 1.5: OYUNLAŞTIRMA (ROZETLER) */}
       <div style={{ backgroundColor: '#ffffff', borderRadius: '10px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0f172a', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <span style={{ fontSize: '1.2rem' }}>🏆</span> Gönüllülük Skoru & Rozetlerim
@@ -832,10 +832,10 @@ const UserDashboard = ({ user }) => {
         </div>
       </div>
 
-      {/* ROW 2: FORMS, NEARBY REQUESTS & ACTIVITIES */}
+      {/* SIRA 2: FORMLAR, YAKIN İSTEKLER VE AKTİVİTELER */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.5fr 1fr', gap: '1.5rem' }} className="dashboard-grid-row2">
         
-        {/* Create Blood Request Card */}
+        {/* Kan Talep Kartı Oluştur */}
         <div style={{
           backgroundColor: '#0f172a',
           borderRadius: '10px',
@@ -939,7 +939,7 @@ const UserDashboard = ({ user }) => {
           </form>
         </div>
 
-        {/* Nearby Requests List Card */}
+        {/* Yakındaki İstekler Listesi Kartı */}
         <div style={{
           backgroundColor: '#ffffff',
           borderRadius: '10px',
@@ -1008,7 +1008,7 @@ const UserDashboard = ({ user }) => {
                 </div>
               ))
             ) : (
-              // Fallback default list
+              // Geri dönüş varsayılan listesi
               [
                 { blood: 'O Rh(-)', hospital: 'Kadıköy Acıbadem Hastanesi', dist: '2.1 km', urgency: 'Acil' },
                 { blood: 'B+', hospital: 'Çekmeköy Devlet Hastanesi', dist: '3.4 km', urgency: 'Acil' },
@@ -1064,7 +1064,7 @@ const UserDashboard = ({ user }) => {
           </div>
         </div>
 
-        {/* Recent Activities Timeline Card */}
+        {/* Son Etkinlikler Zaman Çizelgesi Kartı */}
         <div style={{
           backgroundColor: '#ffffff',
           borderRadius: '10px',
@@ -1091,11 +1091,11 @@ const UserDashboard = ({ user }) => {
             {activities.length > 0 ? (
               activities.map((act, idx) => (
                 <div key={act.id} style={{ display: 'flex', gap: '0.85rem', position: 'relative' }}>
-                  {/* Timeline bar line */}
+                  {/* Zaman çizelgesi çubuk çizgisi */}
                   {idx !== activities.length - 1 && (
                     <div style={{ position: 'absolute', top: '22px', left: '9px', bottom: '-22px', width: '2px', backgroundColor: '#f1f5f9' }} />
                   )}
-                  {/* Bullet Node */}
+                  {/* Madde İşareti Düğümü */}
                   <div style={{ 
                     width: '20px', 
                     height: '20px', 
@@ -1133,10 +1133,10 @@ const UserDashboard = ({ user }) => {
 
       </div>
 
-      {/* ROW 3: CHARTS & QUICK ACTIONS */}
+      {/* SATIR 3: GRAFİKLER VE HIZLI EYLEMLER */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', gap: '1.5rem', alignItems: 'stretch' }} className="dashboard-grid-row3">
         
-        {/* Doughnut Distribution Chart */}
+        {/* Çörek Dağıtım Tablosu */}
         <div style={{
           backgroundColor: '#ffffff',
           borderRadius: '10px',
@@ -1149,7 +1149,7 @@ const UserDashboard = ({ user }) => {
           <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: '#0f172a', margin: '0 0 1rem 0' }}>Kan Talep Dağılımı</h3>
           
           <div style={{ display: 'flex', flex: 1, alignItems: 'center' }} className="distribution-chart-inner">
-            {/* Chart */}
+            {/* Çizelge */}
             <div style={{ width: '50%', height: '150px', position: 'relative' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -1166,7 +1166,7 @@ const UserDashboard = ({ user }) => {
                 <span style={{ fontSize: '1.35rem', color: '#0f172a', fontWeight: '900' }}>{totalNeed}</span>
               </div>
             </div>
-            {/* Legend */}
+            {/* Efsane */}
             <div style={{ width: '50%', display: 'flex', flexDirection: 'column', gap: '0.45rem', paddingLeft: '1rem' }} className="distribution-legend">
               {pieData.map((item, i) => {
                 const percentage = totalNeed > 0 ? Math.round((item.value / totalNeed) * 100) : 0;
@@ -1190,7 +1190,7 @@ const UserDashboard = ({ user }) => {
           </div>
         </div>
 
-        {/* Bar Chart Donation vs Demand */}
+        {/* Çubuk Grafiği Bağış ve Talep */}
         <div style={{
           backgroundColor: '#ffffff',
           borderRadius: '10px',
@@ -1202,7 +1202,7 @@ const UserDashboard = ({ user }) => {
         }} className="monthly-chart-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: '#0f172a', margin: 0 }}>Aylık Bağış İstatistiğiniz</h3>
-            {/* Chart Legend */}
+            {/* Grafik Açıklaması */}
             <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.75rem', fontWeight: '600' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#991b1b' }}>
                 <div style={{ width: '10px', height: '10px', backgroundColor: '#991b1b', borderRadius: '3px' }} />
@@ -1237,7 +1237,7 @@ const UserDashboard = ({ user }) => {
           </div>
         </div>
 
-        {/* Quick Actions Grid */}
+        {/* Hızlı Eylemler Tablosu */}
         <div style={{
           backgroundColor: '#ffffff',
           borderRadius: '10px',
@@ -1251,7 +1251,7 @@ const UserDashboard = ({ user }) => {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', flex: 1 }} className="quick-actions-grid">
             
-            {/* Quick 1: Create request */}
+            {/* Hızlı 1: İstek oluşturun */}
             <button 
               onClick={() => {
                 const select = document.getElementById('quick-request-blood-type');
@@ -1270,7 +1270,7 @@ const UserDashboard = ({ user }) => {
               <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#9f1239' }}>Kan Talebi Oluştur</span>
             </button>
 
-            {/* Quick 2: Nearest Centers */}
+            {/* Hızlı 2: En Yakın Merkezler */}
             <button 
               onClick={() => navigate('/blood-requests')}
               style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '1rem', border: 'none', borderRadius: '8px', backgroundColor: '#eff6ff', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'left' }}
@@ -1282,7 +1282,7 @@ const UserDashboard = ({ user }) => {
               <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#1d4ed8' }}>Yakın Merkezleri Gör</span>
             </button>
 
-            {/* Quick 3: Donation History */}
+            {/* Hızlı 3: Bağış Geçmişi */}
             <button 
               onClick={() => {
                 window.dispatchEvent(new Event('open-donation-history'));
@@ -1296,7 +1296,7 @@ const UserDashboard = ({ user }) => {
               <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#047857' }}>Bağış Geçmişim</span>
             </button>
 
-            {/* Quick 4: Emergency Contacts */}
+            {/* Hızlı 4: Acil Durumda İrtibat Kişileri */}
             <button 
               onClick={() => {
                 toast(
@@ -1322,7 +1322,7 @@ const UserDashboard = ({ user }) => {
 
       </div>
 
-      {/* FLOATING ACTION BUTTON */}
+      {/* HAREKETLİ EYLEM DÜĞMESİ */}
       <button 
         onClick={() => {
           const select = document.getElementById('quick-request-blood-type');
@@ -1355,7 +1355,7 @@ const UserDashboard = ({ user }) => {
         <Plus size={28} />
       </button>
 
-      {/* Global Dashboard UI Styles */}
+      {/* Genel Kontrol Paneli Kullanıcı Arayüzü Stilleri */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes pulse-dot {
           0%, 100% { opacity: 1; transform: scale(1); }

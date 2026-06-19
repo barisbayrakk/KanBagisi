@@ -1,6 +1,6 @@
 namespace KanYonetim.API.Models.DTOs
 {
-    // Auth DTOs
+    // Kimlik Doğrulama DTO'ları
     public class RegisterDto
     {
         public string FullName { get; set; } = string.Empty;
@@ -45,7 +45,7 @@ namespace KanYonetim.API.Models.DTOs
         public bool RequiresEmailVerification { get; set; } = false;
     }
 
-    // Blood Stock DTOs
+    // Kan Stoku DTO'ları
     public class UpdateStockDto
     {
         public int HospitalId { get; set; }
@@ -62,7 +62,7 @@ namespace KanYonetim.API.Models.DTOs
         public string Hastane { get; set; } = string.Empty;
     }
 
-    // Donation Request DTOs
+    // Bağış Talebi DTO'ları
     public class CreateDonationRequestDto
     {
         public int HospitalId { get; set; }
@@ -77,7 +77,7 @@ namespace KanYonetim.API.Models.DTOs
         public string VerificationCode { get; set; } = string.Empty;
     }
 
-    // Eligibility DTO
+    // Uygunluk DTO'su
     public class EligibilityDto
     {
         public bool IsEligible { get; set; }
@@ -86,7 +86,7 @@ namespace KanYonetim.API.Models.DTOs
         public string Message { get; set; } = string.Empty;
     }
 
-    // Nearby Request DTO
+    // Yakındaki DTO'yu Talep Et
     public class NearbyRequestDto
     {
         public int Id { get; set; }
@@ -99,7 +99,7 @@ namespace KanYonetim.API.Models.DTOs
         public DateTime CreatedAt { get; set; }
     }
 
-    // Stats DTO
+    // İstatistikler DTO
     public class StatsDto
     {
         public int TotalUsers { get; set; }
@@ -113,7 +113,7 @@ namespace KanYonetim.API.Models.DTOs
         public int PendingApprovals { get; set; }
         public int DailySystemTraffic { get; set; }
         
-        // Chart Data
+        // Grafik Verileri
         public List<BloodTypeChartDto> BloodTypeDistribution { get; set; } = new();
         public List<DistrictChartDto> DistrictDemand { get; set; } = new();
         public List<ApplicationChartDto> DailyApplications { get; set; } = new();
@@ -137,7 +137,7 @@ namespace KanYonetim.API.Models.DTOs
         public int Applications { get; set; }
     }
 
-    // User List DTO
+    // Kullanıcı Listesi DTO
     public class UserListDto
     {
         public int Id { get; set; }
@@ -152,7 +152,7 @@ namespace KanYonetim.API.Models.DTOs
         public DateTime? LastDonationDate { get; set; }
         public DateTime CreatedAt { get; set; }
     }
-    // Profile DTOs
+    // Profil DTO'ları
     public class UserProfileDto
     {
         public int Id { get; set; }
@@ -240,7 +240,7 @@ namespace KanYonetim.API.Models.DTOs
         public DateTime CreatedAt { get; set; }
     }
 
-    // Support DTOs
+    // DTO'ları destekleyin
     public class CreateTicketDto
     {
         public string Subject { get; set; } = string.Empty;

@@ -81,7 +81,7 @@ const RequestApprovals = () => {
             return;
           }
           try {
-            // First check local storage for frontend demo
+            // Ön uç demosu için öncelikle yerel depolamayı kontrol edin
             const apps = JSON.parse(localStorage.getItem('bloodApplications') || '[]');
             const appIndex = apps.findIndex(a => 
               a.protocolNumber?.toUpperCase() === protocol && 
@@ -97,10 +97,10 @@ const RequestApprovals = () => {
               apps[appIndex].status = 'Approved';
               localStorage.setItem('bloodApplications', JSON.stringify(apps));
 
-              // UPDATE GAMIFICATION & NOTIFICATIONS IN DEMO
+              // DEMO'DA OYUNLAŞTIRMA VE BİLDİRİMLERİ GÜNCELLEME
               const applicantTc = apps[appIndex].applicantTc;
 
-              // Update active user session if it is the applicant
+              // Başvuru sahibi ise etkin kullanıcı oturumunu güncelle
               const activeUserStr = localStorage.getItem('user');
               if (activeUserStr) {
                 try {
@@ -115,7 +115,7 @@ const RequestApprovals = () => {
                 }
               }
 
-              // Update applicant in usersList
+              // Kullanıcı listesindeki başvuru sahibini güncelleyin
               const usersListStr = localStorage.getItem('usersList');
               if (usersListStr) {
                 try {
@@ -143,7 +143,7 @@ const RequestApprovals = () => {
                 localStorage.setItem('kanyonetim_user', JSON.stringify(localUser));
               }
 
-              // Add system notification for badge/pdf
+              // Rozet/pdf için sistem bildirimi ekleyin
               const notifications = JSON.parse(localStorage.getItem('user_notifications') || '[]');
               notifications.push({
                 id: Date.now(),
@@ -155,14 +155,14 @@ const RequestApprovals = () => {
               });
               localStorage.setItem('user_notifications', JSON.stringify(notifications));
 
-              // Try backend just in case
+              // Her ihtimale karşı arka ucu deneyin
               try { await axios.post('/DonationApplication/verify', { protocolNumber: protocol, verificationCode: code }); } catch(e) {}
 
               toast.success('Kan bağışı başarıyla doğrulandı!');
               e.target.reset();
               fetchApprovals();
             } else {
-              // Try backend just in case
+              // Her ihtimale karşı arka ucu deneyin
               await axios.post('/DonationApplication/verify', { protocolNumber: protocol, verificationCode: code });
               toast.success('Kan bağışı başarıyla doğrulandı!');
               e.target.reset();
@@ -188,7 +188,7 @@ const RequestApprovals = () => {
 
       <div className="card glass" style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.03)', boxShadow: '0 20px 50px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
         
-        {/* Tabs */}
+        {/* Sekmeler */}
         <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
           {[
             { id: 'Pending', label: 'Bekleyen Başvurular', icon: Activity, color: '#f59e0b' },
@@ -214,7 +214,7 @@ const RequestApprovals = () => {
           ))}
         </div>
 
-        {/* Filters */}
+        {/* Filtreler */}
         <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid #f1f5f9' }}>
           <div style={{ position: 'relative', width: '350px' }}>
             <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
@@ -228,7 +228,7 @@ const RequestApprovals = () => {
           </div>
         </div>
 
-        {/* List */}
+        {/* Liste */}
         <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>Yükleniyor...</div>
@@ -260,7 +260,7 @@ const RequestApprovals = () => {
 
               {activeTab === 'Pending' && (
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {/* Onayla butonu güvenlik gereği kaldırıldı. Sadece yukarıdaki formdan kod girilerek onaylanabilir. */}
+                  {/* Onayla seçeneği güvenlik gereksinimi kaldırıldı. Sadece devam eden formdan kod girilerek onaylanabilir. */}
                   <button onClick={() => handleStatusUpdate(a.id, 'Rejected')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', borderRadius: '12px', border: '1px solid #ef4444', background: '#ffffff', color: '#ef4444', fontWeight: '700', cursor: 'pointer', transition: 'transform 0.1s' }} onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'} onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}>
                     <XCircle size={18} /> İptal / Reddet
                   </button>

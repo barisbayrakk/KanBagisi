@@ -2,7 +2,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 export const generateCertificate = async (userName, date, bloodType, hospitalName) => {
-  // Create an off-screen container
+  // Ekran dışı kapsayıcı oluşturma
   const container = document.createElement('div');
   container.style.position = 'absolute';
   container.style.left = '-9999px';

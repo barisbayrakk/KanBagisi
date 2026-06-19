@@ -21,26 +21,26 @@ namespace KanYonetim.API.Controllers
         [HttpGet("home-stats")]
         public async Task<IActionResult> GetHomeStats()
         {
-            // 1. Total Active Requests
+            // 1. Toplam Aktif İstekler
             var activeRequestsCount = await _context.DonationRequests
                 .Where(r => r.Status == "Active" || r.Status == "Approved")
                 .CountAsync();
 
-            // 2. Total Donors
+            // 2. Toplam Bağışçı
             var totalDonorsCount = await _context.Users
                 .Where(u => u.Role == "Donor")
                 .CountAsync();
 
-            // 3. Blood Types count
+            // 3. Kan Gruplarının Sayımı
             var bloodTypesCount = await _context.BloodTypes.CountAsync();
 
-            // 4. Lives Saved (Using the formula: Completed Requests * 3)
+            // 4. Kurtarılan Hayatlar (Formülü kullanarak: Tamamlanan İstekler * 3)
             var completedRequestsCount = await _context.DonationRequests
                 .Where(r => r.Status == "Fulfilled")
                 .CountAsync();
             var livesSaved = completedRequestsCount * 3;
 
-            // 5. Blood Group Need Distribution (For Donut Chart)
+            // 5. Kan Grubu İhtiyaç Dağılımı (Çörek Tablosu İçin)
             var bloodGroupStats = (await _context.DonationRequests
                 .Where(r => r.Status == "Active" || r.Status == "Approved")
                 .Include(r => r.BloodType)

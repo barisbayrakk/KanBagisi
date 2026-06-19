@@ -15,7 +15,7 @@ const Chatbot = () => {
   const [hasUnread, setHasUnread] = useState(true);
   const chatEndRef = useRef(null);
 
-  // Auto scroll
+  // Otomatik kaydırma
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
@@ -27,7 +27,7 @@ const Chatbot = () => {
     }
   };
 
-  // Predefined Q&A Menu Options
+  // Önceden Tanımlanmış Soru-Cevap Menüsü Seçenekleri
   const SUGGESTIONS = [
     { label: '🩸 Nasıl Bağış Yapılır?', query: 'nasil' },
     { label: '📋 Bağış Koşulları Neler?', query: 'kosul' },
@@ -78,7 +78,7 @@ const Chatbot = () => {
   const handleSendMessage = (query, labelText) => {
     if (isTyping) return;
 
-    // Add User Message (button click query)
+    // Kullanıcı Mesajı Ekle (düğmeye tıklama sorgusu)
     const userMsg = {
       id: Date.now(),
       sender: 'user',
@@ -87,7 +87,7 @@ const Chatbot = () => {
     };
     setMessages(prev => [...prev, userMsg]);
 
-    // Handle Reset action immediately
+    // Sıfırlama işlemini hemen gerçekleştirin
     if (query === 'reset') {
       setIsTyping(true);
       setTimeout(() => {
@@ -104,7 +104,7 @@ const Chatbot = () => {
       return;
     }
 
-    // Trigger Bot Reply with typing animation
+    // Yazma animasyonuyla Bot Yanıtını Tetikleyin
     setIsTyping(true);
     setTimeout(() => {
       const responseText = getBotResponse(query);
@@ -121,7 +121,7 @@ const Chatbot = () => {
 
   return (
     <>
-      {/* FLOATING ACTION BUTTON */}
+      {/* HAREKETLİ EYLEM DÜĞMESİ */}
       <button
         onClick={toggleChat}
         style={{
@@ -168,7 +168,7 @@ const Chatbot = () => {
         )}
       </button>
 
-      {/* CHAT WINDOW */}
+      {/* SOHBET PENCERESİ */}
       {isOpen && (
         <div
           style={{
@@ -189,7 +189,7 @@ const Chatbot = () => {
             animation: 'slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards'
           }}
         >
-          {/* Header */}
+          {/* Başlık */}
           <div
             style={{
               padding: '1.25rem',
@@ -245,7 +245,7 @@ const Chatbot = () => {
             </button>
           </div>
 
-          {/* Messages Area */}
+          {/* Mesajlar Alanı */}
           <div
             style={{
               flex: 1,
@@ -348,7 +348,7 @@ const Chatbot = () => {
             <div ref={chatEndRef} />
           </div>
 
-          {/* Interactive Structured Options Menu */}
+          {/* İnteraktif Yapılandırılmış Seçenekler Menüsü */}
           <div
             style={{
               padding: '1.25rem 1rem',
@@ -416,7 +416,7 @@ const Chatbot = () => {
             </div>
           </div>
 
-          {/* Inline Styles */}
+          {/* Satır İçi Stiller */}
           <style dangerouslySetInnerHTML={{__html: `
             @keyframes slideUp {
               from { opacity: 0; transform: translateY(20px); }

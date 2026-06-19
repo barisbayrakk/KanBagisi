@@ -17,7 +17,7 @@ const Logistics = () => {
       if (response.data && response.data.length > 0) {
         setTransfers(response.data);
       } else {
-        // Mock data
+        // Sahte veriler
         setTransfers([
           { id: 1, senderHospital: 'Genel Stok (Kızılay)', receiverHospital: 'Şişli Etfal Hastanesi', bloodType: 'A+', amount: 5, courierName: 'Ahmet Yılmaz', status: 'InTransit', estimatedDelivery: new Date(Date.now() + 3600000).toISOString(), createdAt: new Date(Date.now() - 3600000).toISOString() },
           { id: 2, senderHospital: 'Genel Stok (Kızılay)', receiverHospital: 'Çam ve Sakura Şehir Hastanesi', bloodType: 'B-', amount: 2, courierName: 'Atanmadı', status: 'Pending', estimatedDelivery: null, createdAt: new Date(Date.now() - 1800000).toISOString() },

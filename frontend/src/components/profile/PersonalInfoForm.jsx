@@ -54,7 +54,7 @@ const PersonalInfoForm = ({ user, handleInputChange }) => {
             disabled={user.role !== 'Admin'}
           >
             <option value="">Seçiniz</option>
-            {/* Using mock IDs for blood types based on previous logic (1-8) */}
+            {/* Önceki mantığa dayalı olarak kan grupları için sahte kimliklerin kullanılması (1-8) */}
             {KAN_GRUPLARI.map((kg, index) => <option key={kg} value={index + 1}>{kg}</option>)}
           </select>
         </div>
@@ -62,7 +62,7 @@ const PersonalInfoForm = ({ user, handleInputChange }) => {
           <label style={labelStyle}>İlçe <span style={{color: '#991b1b'}}>*</span></label>
           <select name="districtId" value={user.districtId || ''} onChange={handleInputChange} required style={inputStyle}>
             <option value="">Seçiniz</option>
-            {/* Using mock IDs for districts (1-39) */}
+            {/* Bölgeler için sahte kimliklerin kullanılması (1-39) */}
             {ISTANBUL_ILCELER.map((ilce, index) => <option key={ilce} value={index + 1}>{ilce}</option>)}
           </select>
         </div>

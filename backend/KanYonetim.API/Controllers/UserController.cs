@@ -99,7 +99,7 @@ namespace KanYonetim.API.Controllers
 
                 if (user == null) return NotFound("Kullanıcı bulunamadı.");
 
-                // Calculate Completion Rate
+                // Tamamlanma Oranını Hesapla
                 int completedFields = 0;
                 int totalFields = 8; // FullName, TC, Phone, BloodType, District, Weight, DateOfBirth, EmergencyContact
 
@@ -114,13 +114,13 @@ namespace KanYonetim.API.Controllers
 
                 int completionRate = (int)Math.Round((double)completedFields / totalFields * 100);
 
-                // Update Fields
+                // Alanları Güncelle
                 user.FullName = dto.FullName;
                 user.Tc = dto.Tc;
                 user.Phone = dto.Phone;
                 user.Gender = dto.Gender;
                 
-                // Sadece yöneticiler kan grubunu değiştirebilir
+                // Sadece yöneticilerin piyasadaki etkileri
                 if (user.Role == "Admin")
                 {
                     user.BloodTypeId = dto.BloodTypeId;
@@ -148,7 +148,7 @@ namespace KanYonetim.API.Controllers
                 user.TwoFactorEnabled = dto.TwoFactorEnabled;
                 user.ProfileCompletionRate = completionRate;
 
-                // Create Activity Log
+                // Etkinlik Günlüğü Oluştur
                 var activityLog = new ProfileActivityLog
                 {
                     UserId = user.Id,

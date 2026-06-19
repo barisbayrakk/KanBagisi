@@ -62,7 +62,7 @@ const Profile = ({ user: globalUser, setUser: setGlobalUser }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // API call to update profile
+      // Profili güncellemek için API çağrısı
       const payload = {
         fullName: userProfile.fullName,
         tc: userProfile.tc,
@@ -102,7 +102,7 @@ const Profile = ({ user: globalUser, setUser: setGlobalUser }) => {
       ];
       const KAN_GRUPLARI = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-'];
 
-      // Update global user state slightly so UI stays in sync
+      // Kullanıcı arayüzünün senkronize kalması için genel kullanıcı durumunu biraz güncelleyin
       const updatedGlobalUser = { 
         ...globalUser, 
         ...payload, 
@@ -116,7 +116,7 @@ const Profile = ({ user: globalUser, setUser: setGlobalUser }) => {
       toast.success(res.data.message || 'Profil başarıyla güncellendi.');
       setIsDirty(false);
       
-      // Refresh profile & activities
+      // Profili ve etkinlikleri yenile
       fetchProfileData();
       fetchActivities();
     } catch (error) {
@@ -142,12 +142,12 @@ const Profile = ({ user: globalUser, setUser: setGlobalUser }) => {
   return (
     <div className="animate-in" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem' }}>
       
-      {/* Upper Area: Completion Card */}
+      {/* Üst Alan: Tamamlama Kartı */}
       <ProfileCompletionCard completionRate={userProfile.profileCompletionRate} />
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem', '@media (min-width: 1024px)': { gridTemplateColumns: '300px 1fr' } }} className="profile-grid">
         
-        {/* Left Column: Summary & Quick Info */}
+        {/* Sol Sütun: Özet ve Hızlı Bilgi */}
         <div>
           <ProfileSummaryCard user={userProfile} />
           
@@ -180,7 +180,7 @@ const Profile = ({ user: globalUser, setUser: setGlobalUser }) => {
           </div>
         </div>
 
-        {/* Right Column: Forms */}
+        {/* Sağ Sütun: Formlar */}
         <div>
           <PersonalInfoForm user={userProfile} handleInputChange={handleInputChange} />
           <DonationEligibilityForm user={userProfile} handleCheckboxChange={handleCheckboxChange} />

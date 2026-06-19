@@ -17,7 +17,7 @@ const SecurityPanel = () => {
       if (response.data && response.data.length > 0) {
         setLogs(response.data);
       } else {
-        // Mock data
+        // Sahte veriler
         setLogs([
           { id: 1, email: 'hacker@example.com', isSuccess: false, failureReason: 'Geçersiz Şifre (5. Deneme)', ipAddress: '192.168.1.50', createdAt: new Date().toISOString() },
           { id: 2, email: 'admin@hayatagi.com', isSuccess: true, failureReason: '', ipAddress: '10.0.0.12', createdAt: new Date(Date.now() - 3600000).toISOString() },

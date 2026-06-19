@@ -10,7 +10,7 @@ namespace KanYonetim.API.Data
     {
         public static void SeedData(AppDbContext context)
         {
-            // Seed Admin if not exists
+            // Tohum Yöneticisi mevcut değilse
             if (!context.Users.Any(u => u.Role == "Admin"))
             {
                 var adminUser = new User
@@ -31,7 +31,7 @@ namespace KanYonetim.API.Data
                 context.SaveChanges();
             }
 
-            // Seed SubAdmins if not exists
+            // Mevcut değilse Çekirdek Alt Yöneticileri
             if (!context.Users.Any(u => u.Role == "SubAdmin"))
             {
                 var subAdmins = new List<User>
@@ -46,7 +46,7 @@ namespace KanYonetim.API.Data
                 context.SaveChanges();
             }
 
-            // Seed Donors if less than 10 users exist
+            // 10'dan az kullanıcı varsa Tohum Bağışçıları
             if (context.Users.Count(u => u.Role == "Donor") < 10)
             {
                 var random = new Random(42); // deterministic random seed
@@ -63,7 +63,7 @@ namespace KanYonetim.API.Data
                     string lastName = lastNames[i % lastNames.Length];
                     string fullName = $"{firstName} {lastName}";
                     
-                    // Generate clean email without special Turkish characters
+                    // Özel Türkçe karakterler olmadan temiz e-posta oluşturun
                     string cleanFirstName = ReplaceTurkishChars(firstName.ToLower());
                     string cleanLastName = ReplaceTurkishChars(lastName.ToLower());
                     string email = $"{cleanFirstName}.{cleanLastName}{i + 1}@{emailDomains[i % emailDomains.Length]}";
@@ -96,7 +96,7 @@ namespace KanYonetim.API.Data
                 context.Users.AddRange(seededUsers);
                 context.SaveChanges();
 
-                // Seed Donation Requests and Applications
+                // Tohum Bağış Talepleri ve Başvuruları
                 var hospitals = context.Hospitals.ToList();
                 if (hospitals.Any())
                 {
@@ -104,7 +104,7 @@ namespace KanYonetim.API.Data
                     var urgencies = new[] { "Normal", "Acil", "Kritik" };
                     var statuses = new[] { "Active", "Fulfilled" };
 
-                    // Seed 25 donation requests
+                    // 25 bağış talebini tohumlayın
                     for (int i = 0; i < 25; i++)
                     {
                         var request = new DonationRequest
@@ -122,14 +122,14 @@ namespace KanYonetim.API.Data
                     context.DonationRequests.AddRange(seededRequests);
                     context.SaveChanges();
 
-                    // Seed Donation Applications for the users
+                    // Kullanıcılara yönelik Tohum Bağış Uygulamaları
                     var donationRequests = context.DonationRequests.ToList();
                     var appStatuses = new[] { "Pending", "Approved", "Rejected" };
                     var seededApps = new List<DonationApplication>();
 
                     foreach (var request in donationRequests)
                     {
-                        // Match 1-3 users to apply to this request
+                        // Bu isteğe başvurmak için 1-3 kullanıcıyı eşleştirin
                         int appCount = random.Next(1, 4);
                         var eligibleDonors = seededUsers
                             .Where(u => u.BloodTypeId == request.BloodTypeId)
@@ -156,7 +156,7 @@ namespace KanYonetim.API.Data
                             };
                             seededApps.Add(app);
 
-                            // Create an audit log for approved or pending donations
+                            // Onaylanmış veya bekleyen bağışlar için bir denetim günlüğü oluşturun
                             context.AuditLogs.Add(new AuditLog
                             {
                                 UserId = donor.Id,
@@ -174,7 +174,7 @@ namespace KanYonetim.API.Data
                 }
             }
 
-            // Seed Support Tickets
+            // Tohum Destek Biletleri
             if (context.SupportTickets.Count() < 5)
             {
                 var donors = context.Users.Where(u => u.Role == "Donor").ToList();
@@ -282,12 +282,12 @@ namespace KanYonetim.API.Data
                     }
                 }
             }
-            // Seed missing hospitals for all districts and populate BloodStock
+            // Tüm bölgeler için eksik hastanelerin tohumlarını atın ve BloodStock'u doldurun
             var allDistricts = context.Districts.ToList();
             var bloodTypes = context.BloodTypes.ToList();
             if (context.BloodStocks.Count() == 0 && allDistricts.Any() && bloodTypes.Any())
             {
-                // Ensure every district has at least one hospital
+                // Her bölgede en az bir hastanenin olmasını sağlayın
                 var existingHospitals = context.Hospitals.ToList();
                 foreach (var dist in allDistricts)
                 {
@@ -306,7 +306,7 @@ namespace KanYonetim.API.Data
                 }
                 context.SaveChanges();
 
-                // Seed Data Map
+                // Tohum Veri Haritası
                 var seedData = new Dictionary<string, Dictionary<string, int>>
                 {
                     { "Adalar", new Dictionary<string, int> { { "0+", 2 }, { "0-", 1 }, { "A+", 3 }, { "A-", 0 }, { "B+", 1 }, { "B-", 0 }, { "AB+", 1 }, { "AB-", 0 } } },

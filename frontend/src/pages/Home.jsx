@@ -29,10 +29,10 @@ const Home = () => {
       fontFamily: "'Inter', sans-serif"
     }}>
       
-      {/* ROW 1: HERO SECTION */}
+      {/* SATIR 1: KAHRAMAN BÖLÜMÜ */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem', flex: '0 0 210px', minHeight: 0, overflow: 'hidden' }}>
         
-        {/* Left Column: Text & Buttons */}
+        {/* Sol Sütun: Metin ve Düğmeler */}
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: '0.5rem' }}>
           <h1 style={{ fontSize: 'clamp(1.9rem, 2.6vw, 2.7rem)', fontWeight: '900', lineHeight: '1.15', color: '#000000', margin: '0 0 0.4rem 0', letterSpacing: '-0.03em' }}>
             Hayat Kurtarmak <br />
@@ -50,26 +50,26 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Right Column: Abstract Illustration */}
+        {/* Sağ Sütun: Soyut İllüstrasyon */}
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(248,250,252,0) 70%)', overflow: 'hidden' }}>
-          {/* Abstract IV Bag / Heart Concept */}
+          {/* Soyut IV Çantası / Kalp Konsepti */}
           <div style={{ position: 'relative', width: '180px', height: '180px', zIndex: 10 }}>
-            {/* The "Bag" */}
+            {/* "Çanta" */}
             <div style={{ position: 'absolute', width: '110px', height: '140px', background: 'linear-gradient(135deg, #fb7185, #991b1b)', borderRadius: '12px', top: '10px', left: '35px', boxShadow: '0 12px 25px rgba(225,29,72,0.2)', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '10px' }}>
               <div style={{ width: '30px', height: '5px', background: 'rgba(255,255,255,0.5)', borderRadius: '2px' }}></div>
               <Heart size={48} fill="white" color="white" style={{ marginTop: '15px' }} className="pulse-animation" />
             </div>
-            {/* The "Tube" */}
+            {/* "Tüp" */}
             <svg style={{ position: 'absolute', top: '140px', left: '80px', width: '160px', height: '80px', overflow: 'visible', zIndex: -1 }}>
               <path d="M 10 10 C 10 70, 90 0, 140 70" fill="none" stroke="#991b1b" strokeWidth="5" strokeLinecap="round" />
             </svg>
-            {/* The "Arm/Receiver" abstract */}
+            {/* "Kol/Alıcı" özeti */}
             <div style={{ position: 'absolute', top: '180px', left: '170px', width: '90px', height: '30px', background: '#ffedd5', borderRadius: '8px', transform: 'rotate(-10deg)', boxShadow: '0 6px 12px rgba(0,0,0,0.05)' }}>
                <div style={{ position: 'absolute', top: '6px', left: '12px', width: '22px', height: '15px', background: 'white', borderRadius: '4px' }}></div>
             </div>
           </div>
           
-          {/* Floating elements */}
+          {/* Yüzen elemanlar */}
           <div style={{ position: 'absolute', top: '15%', right: '5%', background: 'white', padding: '6px 10px', borderRadius: '8px', boxShadow: '0 6px 15px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '8px', animation: 'float 4s ease-in-out infinite' }}>
             <div style={{ position: 'absolute', top: '-6px', right: '-6px', background: '#991b1b', width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Bell size={9} color="white" fill="white" />
@@ -84,7 +84,7 @@ const Home = () => {
 
       </div>
 
-      {/* ROW 2: CARDS SECTION */}
+      {/* SATIR 2: KARTLAR BÖLÜMÜ */}
       <div style={{ background: 'white', borderRadius: '10px', padding: '0.75rem 1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9', flex: '0 0 110px', boxSizing: 'border-box', minHeight: 0, overflow: 'hidden' }}>
         <h3 style={{ fontSize: '0.95rem', fontWeight: '800', color: '#0f172a', margin: '0 0 0.35rem 0', textAlign: 'center' }}>Nasıl Yardımcı Olabilirsiniz?</h3>
         
@@ -101,7 +101,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* ROW 3: FOOTER FEATURES */}
+      {/* SATIR 3: ALT BİLGİ ÖZELLİKLERİ */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', borderRadius: '10px', padding: '0.75rem 1.5rem', flex: '0 0 110px', boxSizing: 'border-box', border: '1px solid #f1f5f9', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
          {features.map((feat, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -117,7 +117,7 @@ const Home = () => {
       </div>
 
       <style dangerouslySetInnerHTML={{__html: `
-        /* Enforce exact fitting to viewport */
+        /* Görünüm alanına tam olarak sığdırmayı zorunlu kılın */
         body { overflow: hidden; }
         
         .pulse-animation { animation: pulseHeart 2s infinite; }

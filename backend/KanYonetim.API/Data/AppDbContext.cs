@@ -32,7 +32,7 @@ namespace KanYonetim.API.Data
             modelBuilder.Entity<BloodStock>()
                 .HasIndex(bs => new { bs.HospitalId, bs.BloodTypeId }).IsUnique();
 
-            // Seed Blood Types
+            // Tohum Kan Türleri
             modelBuilder.Entity<BloodType>().HasData(
                 new BloodType { Id = 1, Name = "A+" },
                 new BloodType { Id = 2, Name = "A-" },
@@ -44,7 +44,7 @@ namespace KanYonetim.API.Data
                 new BloodType { Id = 8, Name = "0-" }
             );
 
-            // Seed Istanbul Districts (39 districts with approximate center coordinates)
+            // Tohum İstanbul İlçeleri (yaklaşık merkez koordinatlarıyla 39 ilçe)
             modelBuilder.Entity<District>().HasData(
                 new District { Id = 1, Name = "Adalar", Latitude = 40.8761, Longitude = 29.0901 },
                 new District { Id = 2, Name = "Arnavutköy", Latitude = 41.1848, Longitude = 28.7394 },
@@ -87,7 +87,7 @@ namespace KanYonetim.API.Data
                 new District { Id = 39, Name = "Zeytinburnu", Latitude = 41.0042, Longitude = 28.9069 }
             );
 
-            // Seed Hospitals (sample hospitals across districts)
+            // Tohum Hastaneleri (bölgeler arası örnek hastaneler)
             modelBuilder.Entity<Hospital>().HasData(
                 new Hospital { Id = 1, Name = "İstanbul Üniversitesi Tıp Fakültesi", DistrictId = 20, Address = "Çapa, Fatih", Phone = "0212 414 00 00" },
                 new Hospital { Id = 2, Name = "Haydarpaşa Numune Hastanesi", DistrictId = 38, Address = "Selimiye, Üsküdar", Phone = "0216 414 45 02" },

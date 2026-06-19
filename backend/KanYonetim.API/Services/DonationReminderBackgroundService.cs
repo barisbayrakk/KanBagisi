@@ -15,7 +15,7 @@ namespace KanYonetim.API.Services
     {
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<DonationReminderBackgroundService> _logger;
-        // Interval between checks (e.g., check every 1 minute for development / demonstration)
+        // Kontroller arasındaki aralık (örn. geliştirme/gösterim için her 1 dakikada bir kontrol)
         private readonly TimeSpan _checkInterval = TimeSpan.FromMinutes(1);
 
         public DonationReminderBackgroundService(
@@ -55,7 +55,7 @@ namespace KanYonetim.API.Services
                 var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
 
-                // Get all donors who have previously donated
+                // Daha önce bağışta bulunan tüm bağışçıları alın
                 var donors = await dbContext.Users
                     .Where(u => u.Role == "Donor" && u.LastDonationDate != null)
                     .ToListAsync(stoppingToken);
@@ -66,15 +66,15 @@ namespace KanYonetim.API.Services
                 {
                     if (stoppingToken.IsCancellationRequested) break;
 
-                    // Female: 120 days, Male/Other: 90 days
+                    // Kadın: 120 gün, Erkek/Diğer: 90 gün
                     int requiredDays = user.Gender == "Kadın" ? 120 : 90;
                     DateTime lastDonation = user.LastDonationDate!.Value;
                     DateTime nextEligibleDate = lastDonation.AddDays(requiredDays);
 
-                    // If user is eligible
+                    // Kullanıcı uygunsa
                     if (today >= nextEligibleDate.Date)
                     {
-                        // Check if reminder notification was already sent after the last donation date
+                        // Son bağış tarihinden sonra hatırlatma bildiriminin gönderilip gönderilmediğini kontrol edin
                         bool alreadyNotified = await dbContext.Notifications
                             .AnyAsync(n => n.UserId == user.Id && 
                                            n.Type == "DonationEligibilityReminder" && 
@@ -85,7 +85,7 @@ namespace KanYonetim.API.Services
                         {
                             _logger.LogInformation("User {UserId} ({Email}) is eligible to donate again. Creating notification...", user.Id, user.Email);
 
-                            // Create Database Notification
+                            // Veritabanı Bildirimi Oluştur
                             var notification = new Notification
                             {
                                 UserId = user.Id,
@@ -97,7 +97,7 @@ namespace KanYonetim.API.Services
                             };
                             dbContext.Notifications.Add(notification);
 
-                            // Log profile activity
+                            // Profil etkinliğini günlüğe kaydet
                             var log = new ProfileActivityLog
                             {
                                 UserId = user.Id,
@@ -107,7 +107,7 @@ namespace KanYonetim.API.Services
                             };
                             dbContext.ProfileActivityLogs.Add(log);
 
-                            // Send Email Notification
+                            // E-posta Bildirimi Gönder
                             if (user.EmailNotifications && !string.IsNullOrEmpty(user.Email))
                             {
                                 try

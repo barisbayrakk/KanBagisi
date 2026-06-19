@@ -19,35 +19,35 @@ namespace KanYonetim.API.Models
         public bool IsEmailVerified { get; set; } = false;
         public string? EmailVerificationCode { get; set; }
 
-        // --- NEW PROFILE FIELDS ---
+        // --- YENİ PROFİL ALANLARI ---
         public DateTime? DateOfBirth { get; set; }
         public double? Weight { get; set; }
         public string? Title { get; set; } // Görev/Unvan
         
-        // Health / Donation Eligibility
+        // Sağlık / Bağış Uygunluğu
         public bool HasChronicDisease { get; set; } = false;
         public bool UsesMedication { get; set; } = false;
         public bool RecentAlcoholUse { get; set; } = false;
         public bool RecentSurgery { get; set; } = false;
 
-        // Emergency Contact
+        // Acil Durum İletişimi
         public string? EmergencyContactName { get; set; }
         public string? EmergencyContactRelation { get; set; }
         public string? EmergencyContactPhone { get; set; }
 
-        // Location Detail
+        // Konum Detayı
         public string? City { get; set; } = "İstanbul";
         public string? Neighborhood { get; set; }
         public string? NearestHospital { get; set; }
 
-        // Settings / Privacy / Notifications
+        // Ayarlar / Gizlilik / Bildirimler
         public string ProfileVisibility { get; set; } = "Public"; // Public, HospitalOnly, Private
         public bool AllowPhoneShare { get; set; } = true;
         public bool EmailNotifications { get; set; } = true;
         public bool SmsNotifications { get; set; } = true;
         public bool LocationBasedNotifications { get; set; } = true;
         
-        // Security / Progress
+        // Güvenlik / İlerleme
         public bool TwoFactorEnabled { get; set; } = false;
         public bool IsPhoneVerified { get; set; } = false;
         public int ProfileCompletionRate { get; set; } = 20;

@@ -12,7 +12,7 @@ const LiveTracking = () => {
   ]);
 
   useEffect(() => {
-    // SignalR Connection
+    // SignalR Bağlantısı
     const connection = new signalR.HubConnectionBuilder()
       .withUrl("http://localhost:5090/notificationHub")
       .withAutomaticReconnect()
@@ -70,12 +70,12 @@ const LiveTracking = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr', gap: '2rem' }}>
         
-        {/* Left Side: Leaflet Map */}
+        {/* Sol Taraf: Broşür Haritası */}
         <div>
           <LiveMap />
         </div>
 
-        {/* Right Side: Notification Center */}
+        {/* Sağ Taraf: Bildirim Merkezi */}
         <div className="card glass" style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.03)', boxShadow: '0 20px 50px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', height: '600px' }}>
           <div style={{ padding: '1.5rem', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>

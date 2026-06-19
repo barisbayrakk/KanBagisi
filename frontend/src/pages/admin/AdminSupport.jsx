@@ -25,12 +25,12 @@ const AdminSupport = () => {
   const [filterStatus, setFilterStatus] = useState('All'); // All, Open, Answered, Resolved, Closed
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Reply input state
+  // Yanıt giriş durumu
   const [replyText, setReplyText] = useState('');
   
   const chatEndRef = useRef(null);
 
-  // Fetch all Tickets
+  // Tüm Biletleri Getir
   const fetchTickets = async (selectId = null) => {
     try {
       const res = await axios.get('/Support/tickets');
@@ -54,12 +54,12 @@ const AdminSupport = () => {
     fetchTickets();
   }, []);
 
-  // Auto-scroll chat to bottom
+  // Sohbeti otomatik olarak aşağıya kaydır
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [selectedTicket?.messages]);
 
-  // Handle Reply Submission
+  // Yanıt Gönderimini İşle
   const handleSendReply = async (e) => {
     e.preventDefault();
     if (!replyText.trim()) return;
@@ -71,7 +71,7 @@ const AdminSupport = () => {
       });
       setReplyText('');
       toast.success("Mesaj gönderildi ve kullanıcıya bildirim iletildi.");
-      // Reload ticket data
+      // Bilet verilerini yeniden yükle
       await fetchTickets(selectedTicket.id);
     } catch (err) {
       console.error(err);
@@ -81,7 +81,7 @@ const AdminSupport = () => {
     }
   };
 
-  // Update Status Action
+  // Durumu Güncelleme Eylemi
   const handleUpdateStatus = async (status) => {
     try {
       await axios.put(`/Support/tickets/${selectedTicket.id}/status`, {
@@ -95,13 +95,13 @@ const AdminSupport = () => {
     }
   };
 
-  // Format date helper
+  // Tarih yardımcısını biçimlendir
   const formatDate = (dateStr) => {
     const d = new Date(dateStr);
     return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
   };
 
-  // Get status badge settings
+  // Durum rozeti ayarlarını alın
   const getStatusBadge = (status) => {
     switch (status) {
       case 'Open':
@@ -117,7 +117,7 @@ const AdminSupport = () => {
     }
   };
 
-  // Filtered tickets
+  // Filtrelenmiş biletler
   const filteredTickets = tickets.filter(t => {
     const matchesStatus = filterStatus === 'All' || t.status === filterStatus;
     const matchesSearch = t.subject.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -127,7 +127,7 @@ const AdminSupport = () => {
     return matchesStatus && matchesSearch;
   });
 
-  // Aggregate stats for admin placeholder panel
+  // Yönetici yer tutucu paneli için toplu istatistikler
   const statsOpen = tickets.filter(t => t.status === 'Open').length;
   const statsAnswered = tickets.filter(t => t.status === 'Answered').length;
   const statsResolved = tickets.filter(t => t.status === 'Resolved').length;
@@ -151,7 +151,7 @@ const AdminSupport = () => {
       animation: 'fadeInUp 0.5s ease-out' 
     }} className="support-grid">
       
-      {/* LEFT PANEL: ALL TICKETS LIST */}
+      {/* SOL PANEL: TÜM BİLET LİSTESİ */}
       <div style={{ 
         backgroundColor: '#ffffff', 
         borderRadius: '10px', 
@@ -181,7 +181,7 @@ const AdminSupport = () => {
               color: '#0f172a'
             }}
           />
-          {/* Status filters */}
+          {/* Durum filtreleri */}
           <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
             {['All', 'Open', 'Answered', 'Resolved', 'Closed'].map((status) => (
               <button
@@ -268,7 +268,7 @@ const AdminSupport = () => {
         </div>
       </div>
 
-      {/* RIGHT PANEL: CONVERSATION & ACTIONS */}
+      {/* SAĞ PANEL: KONUŞMA VE EYLEMLER */}
       <div style={{ 
         backgroundColor: '#ffffff', 
         borderRadius: '10px', 
@@ -281,10 +281,10 @@ const AdminSupport = () => {
         overflow: 'hidden'
       }}>
         {selectedTicket ? (
-          /* CONVERSATION VIEW */
+          /* KONUŞMA GÖRÜNÜMÜ */
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             
-            {/* Header Details */}
+            {/* Başlık Ayrıntıları */}
             <div style={{ 
               display: 'flex', 
               justifyContent: 'space-between', 
@@ -307,14 +307,14 @@ const AdminSupport = () => {
                   }}>{getStatusBadge(selectedTicket.status).text}</span>
                 </div>
                 <h2 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0f172a', margin: '0.2rem 0 0.5rem 0' }}>{selectedTicket.subject}</h2>
-                {/* User information bar */}
+                {/* Kullanıcı bilgi çubuğu */}
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', fontSize: '0.75rem', color: '#64748b' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><User size={12} /> {selectedTicket.userName}</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Mail size={12} /> {selectedTicket.userEmail}</span>
                 </div>
               </div>
 
-              {/* Status Actions */}
+              {/* Durum Eylemleri */}
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 {selectedTicket.status !== 'Resolved' && (
                   <button
@@ -381,7 +381,7 @@ const AdminSupport = () => {
               </div>
             </div>
 
-            {/* Conversation Messages */}
+            {/* Konuşma Mesajları */}
             <div style={{ 
               flex: 1, 
               overflowY: 'auto', 
@@ -404,7 +404,7 @@ const AdminSupport = () => {
                       gap: '0.75rem' 
                     }}
                   >
-                    {/* User Avatar on Left */}
+                    {/* Soldaki Kullanıcı Avatarı */}
                     {!isAdminReply && (
                       <div style={{ 
                         width: '32px', 
@@ -449,7 +449,7 @@ const AdminSupport = () => {
               <div ref={chatEndRef} />
             </div>
 
-            {/* Input area */}
+            {/* Giriş alanı */}
             <form onSubmit={handleSendReply} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
               <input 
                 type="text" 
@@ -494,7 +494,7 @@ const AdminSupport = () => {
 
           </div>
         ) : (
-          /* ADMIN PLACEHOLDER VIEW */
+          /* YÖNETİCİ YER TUTUCU GÖRÜNÜMÜ */
           <div style={{ 
             display: 'flex', 
             flexDirection: 'column', 
@@ -523,7 +523,7 @@ const AdminSupport = () => {
               Kullanıcılardan gelen destek taleplerini yanıtlayabilir, durumlarını yönetebilir ve sistemsel konularda rehberlik sağlayabilirsiniz.
             </p>
 
-            {/* Quick stats grid */}
+            {/* Hızlı istatistik tablosu */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', width: '100%', maxWidth: '400px' }}>
               <div style={{ backgroundColor: '#fff7ed', borderRadius: '8px', padding: '1rem', border: '1px solid #ffedd5' }}>
                 <span style={{ fontSize: '1.5rem', fontWeight: '900', color: '#ea580c', display: 'block' }}>{statsOpen}</span>

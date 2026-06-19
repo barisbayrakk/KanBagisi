@@ -5,7 +5,7 @@ const KanRotasi = () => {
   const [completedDonations, setCompletedDonations] = useState([]);
 
   useEffect(() => {
-    // 1. Fetch Approved Applications
+    // 1. Onaylanmış Uygulamaları Getirin
     const apps = JSON.parse(localStorage.getItem('bloodApplications') || '[]');
     const approvedApps = apps.filter(a => a.isApproved === true).map(a => ({
       id: `app_${a.id}`,
@@ -19,7 +19,7 @@ const KanRotasi = () => {
       protocol: a.protocolNumber || 'N/A'
     }));
 
-    // 2. Fetch Direct Donations
+    // 2. Doğrudan Bağış Alın
     const directDons = JSON.parse(localStorage.getItem('donationList') || '[]');
     const mappedDirectDons = directDons.map(d => ({
       id: `dir_${d.id}`,
@@ -33,10 +33,10 @@ const KanRotasi = () => {
       protocol: 'Doğrudan Bağış'
     }));
 
-    // 3. Combine and Sort by Date/Time (Newest first)
+    // 3. Tarihe/Saate göre Birleştir ve Sırala (Önce en yeni)
     const combined = [...approvedApps, ...mappedDirectDons];
     
-    // Simple sort assuming date format DD.MM.YYYY and time HH:MM
+    // GG.AA.YYYY tarih biçimini ve SS:DD saatini varsayarak basit sıralama
     combined.sort((a, b) => {
       try {
         const [dayA, monthA, yearA] = a.date.split('.');
@@ -87,16 +87,16 @@ const KanRotasi = () => {
                 boxShadow: '0 4px 6px rgba(0,0,0,0.02)' 
               }}>
                 
-                {/* Left Side: Donor -> Receiver Flow */}
+                {/* Sol Taraf: Donör -> Alıcı Akışı */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1 }}>
                   
-                  {/* Blood Type Badge */}
+                  {/* Kan Grubu Rozeti */}
                   <div style={{ width: '60px', height: '60px', borderRadius: '12px', background: 'rgba(225,29,72,0.1)', color: '#991b1b', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontWeight: '800', flexShrink: 0 }}>
                     <Droplet size={20} />
                     <span style={{ fontSize: '0.85rem' }}>{item.bloodType}</span>
                   </div>
 
-                  {/* Flow Route */}
+                  {/* Akış Rotası */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
                     <div style={{ flex: 1, textAlign: 'right' }}>
                       <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase' }}>Kan Veren (Bağışçı)</p>
@@ -115,7 +115,7 @@ const KanRotasi = () => {
                   </div>
                 </div>
 
-                {/* Right Side: Hospital & Date Info */}
+                {/* Sağ Taraf: Hastane ve Tarih Bilgileri */}
                 <div style={{ borderLeft: '1px solid #e2e8f0', paddingLeft: '1.5rem', marginLeft: '1.5rem', width: '280px', flexShrink: 0 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#475569', fontSize: '0.9rem', fontWeight: '600' }}>

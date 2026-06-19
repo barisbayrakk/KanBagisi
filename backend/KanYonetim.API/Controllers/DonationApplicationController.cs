@@ -56,7 +56,7 @@ namespace KanYonetim.API.Controllers
 
             _context.DonationApplications.Add(application);
 
-            // Log activity
+            // Etkinlik günlüğü
             try
             {
                 var reqInfo = await _context.DonationRequests
@@ -116,13 +116,13 @@ namespace KanYonetim.API.Controllers
 
             if (status == "Approved")
             {
-                // Update donor's last donation date if application is approved/completed
+                // Başvuru onaylanırsa/tamamlanırsa bağışçının son bağış tarihini güncelleyin
                 if (application.Donor != null)
                 {
                     application.Donor.LastDonationDate = DateTime.UtcNow;
                 }
 
-                // Log activity
+                // Etkinlik günlüğü
                 try
                 {
                     var activityLog = new ProfileActivityLog
@@ -141,7 +141,7 @@ namespace KanYonetim.API.Controllers
             }
             else if (status == "Rejected")
             {
-                // Log activity
+                // Etkinlik günlüğü
                 try
                 {
                     var activityLog = new ProfileActivityLog
@@ -184,7 +184,7 @@ namespace KanYonetim.API.Controllers
                 application.Donor.LastDonationDate = DateTime.UtcNow;
             }
 
-            // Create an audit log for approved donation
+            // Onaylanmış bağış için bir denetim günlüğü oluşturun
             _context.AuditLogs.Add(new AuditLog
             {
                 UserId = application.DonorId,
@@ -196,7 +196,7 @@ namespace KanYonetim.API.Controllers
                 CreatedAt = DateTime.UtcNow
             });
 
-            // Log activity
+            // Etkinlik günlüğü
             try
             {
                 var activityLog = new ProfileActivityLog

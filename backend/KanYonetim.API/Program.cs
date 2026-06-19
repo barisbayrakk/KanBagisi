@@ -9,7 +9,7 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Hizmetleri kapsayıcıya ekleyin.
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
@@ -47,7 +47,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Custom Services
+// Özel Hizmetler
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IDonationEligibilityService, DonationEligibilityService>();
 builder.Services.AddScoped<IDistanceService, DistanceService>();
@@ -63,7 +63,7 @@ builder.Services.AddCors(opt =>
     });
 });
 
-// Authentication
+// Kimlik doğrulama
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -78,7 +78,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// HTTP istek hattını yapılandırın.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -93,7 +93,7 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<NotificationHub>("/notificationHub");
 
-// Ensure Database is created and Seeded
+// Veritabanının oluşturulduğundan ve Tohumlandığından emin olun
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;

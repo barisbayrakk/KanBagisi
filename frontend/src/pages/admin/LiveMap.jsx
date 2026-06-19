@@ -4,7 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { Map as MapIcon } from 'lucide-react';
 
-// Fix for default marker icon in react-leaflet
+// Tepki broşüründe varsayılan işaretleyici simgesi düzeltildi
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -12,7 +12,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Mock data for hospitals and blood need in Istanbul
+// İstanbul'daki hastaneler ve kan ihtiyacına ilişkin sahte veriler
 const hospitalLocations = [
   { id: 1, name: 'Şişli Etfal Hastanesi', position: [41.056, 28.985], needLevel: 'High', bloodTypes: ['A+', '0-'], units: 5 },
   { id: 2, name: 'Çam ve Sakura Şehir Hastanesi', position: [41.116, 28.784], needLevel: 'Medium', bloodTypes: ['B-', 'AB+'], units: 2 },

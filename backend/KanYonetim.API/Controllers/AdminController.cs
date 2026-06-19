@@ -131,7 +131,7 @@ namespace KanYonetim.API.Controllers
 
                 user.LastDonationDate = DateTime.UtcNow;
                 
-                // Add activity log
+                // Etkinlik günlüğü ekle
                 var activityLog = new ProfileActivityLog
                 {
                     UserId = user.Id,
@@ -177,7 +177,7 @@ namespace KanYonetim.API.Controllers
                 DailySystemTraffic = new Random().Next(150, 500) // Mock for now
             };
 
-            // Blood Type Distribution
+            // Kan Grubu Dağılımı
             var btDist = await _context.Users
                 .Where(u => u.BloodType != null)
                 .GroupBy(u => u.BloodType.Name)
@@ -185,7 +185,7 @@ namespace KanYonetim.API.Controllers
                 .ToListAsync();
             stats.BloodTypeDistribution = btDist;
 
-            // District Demand
+            // Bölge Talebi
             var distDemand = await _context.DonationRequests
                 .Include(r => r.Hospital)
                 .ThenInclude(h => h.District)
@@ -196,7 +196,7 @@ namespace KanYonetim.API.Controllers
                 .ToListAsync();
             stats.DistrictDemand = distDemand;
 
-            // Daily Applications (Last 7 days)
+            // Günlük Başvurular (Son 7 gün)
             var last7Days = Enumerable.Range(0, 7).Select(i => today.AddDays(-i)).ToList();
             var appData = await _context.DonationApplications
                 .Where(a => a.ApplicationDate >= today.AddDays(-7))
@@ -479,7 +479,7 @@ namespace KanYonetim.API.Controllers
         {
             if (dto == null) return BadRequest("Geçersiz veri.");
 
-            // Find districts and hospitals
+            // Bölgeleri ve hastaneleri bulun
             var senderDist = await _context.Districts.FirstOrDefaultAsync(d => d.Name == dto.Sender);
             var receiverDist = await _context.Districts.FirstOrDefaultAsync(d => d.Name == dto.Receiver);
             if (senderDist == null || receiverDist == null) return BadRequest("Geçersiz ilçe.");
@@ -503,13 +503,13 @@ namespace KanYonetim.API.Controllers
                 _context.BloodStocks.Add(receiverStock);
             }
 
-            // Deduct and Add
+            // Çıkar ve Ekle
             senderStock.Units -= dto.Amount;
             senderStock.LastUpdated = DateTime.UtcNow;
             receiverStock.Units += dto.Amount;
             receiverStock.LastUpdated = DateTime.UtcNow;
 
-            // Create transfer record
+            // Aktarım kaydı oluştur
             var transfer = new StockTransfer
             {
                 SenderDistrict = dto.Sender,

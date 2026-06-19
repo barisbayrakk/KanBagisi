@@ -74,7 +74,7 @@ const UserManagement = ({ user, usersList, setUsersList }) => {
 
   return (
     <div className="animate-in" style={{ padding: '0 0 4rem 0' }}>
-      {/* Top Stats Cards */}
+      {/* En İyi İstatistik Kartları */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
         <div className="card glass" style={{ background: '#ffffff', borderRadius: '10px', padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', border: '1px solid rgba(0,0,0,0.03)', boxShadow: '0 10px 40px rgba(0,0,0,0.02)' }}>
           <div style={{ width: '56px', height: '56px', borderRadius: '8px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -107,10 +107,10 @@ const UserManagement = ({ user, usersList, setUsersList }) => {
         </div>
       </div>
 
-      {/* Main Table Card */}
+      {/* Ana Masa Kartı */}
       <div className="card glass" style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.03)', boxShadow: '0 20px 50px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
         
-        {/* Header & Filters */}
+        {/* Başlık ve Filtreler */}
         <div style={{ padding: '2rem', borderBottom: '1px solid #f1f5f9' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -151,7 +151,7 @@ const UserManagement = ({ user, usersList, setUsersList }) => {
           </div>
         </div>
 
-        {/* Table Area */}
+        {/* Masa Alanı */}
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
@@ -204,7 +204,7 @@ const UserManagement = ({ user, usersList, setUsersList }) => {
                     </span>
                   </td>
 
-                  {/* İlçe */}
+                  {/* ilçe */}
                   <td style={{ padding: '1.25rem 2rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#475569', fontSize: '0.9rem' }}>
                       <MapPin size={14} style={{ color: '#94a3b8' }} /> {u.district || '-'}
@@ -247,7 +247,7 @@ const UserManagement = ({ user, usersList, setUsersList }) => {
           </table>
         </div>
 
-        {/* Pagination */}
+        {/* Sayfalandırma */}
         {totalPages > 1 && (
           <div style={{ padding: '1.5rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9' }}>
             <span style={{ color: '#64748b', fontSize: '0.9rem' }}>

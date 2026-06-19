@@ -44,10 +44,10 @@ const UserLayout = ({ children, user, setUser }) => {
         const msgs = JSON.parse(localStorage.getItem('bloodMessages') || '[]');
         const apps = JSON.parse(localStorage.getItem('bloodApplications') || '[]');
 
-        // 1. Okunmasi gereken basvurular (Bu kullanicinin actigi talepler ve isReadByRequester false olanlar)
+        // 1. Okunması gereken basvurular (Bu kullanıcının actigi talepler ve isReadByRequester false olanlar)
         const unreadAppsCount = apps.filter(ap => ap.requesterTc === user.tc && ap.isReadByRequester === false).length;
 
-        // 2. Okunmamis mesajlar (Kullanicinin dahil oldugu sohbetler)
+        // 2. Okunmamış mesajlar (Kullanicinin sohbetler dahil olduğu)
         const myChatIds = [
           ...apps.filter(a => a.applicantTc === user.tc).map(a => `${a.alertId}_${a.applicantTc}`),
           ...apps.filter(a => a.requesterTc === user.tc).map(a => `${a.alertId}_${a.applicantTc}`)
@@ -70,7 +70,7 @@ const UserLayout = ({ children, user, setUser }) => {
     return () => clearInterval(interval);
   }, [user]);
 
-  // Cooldown expiration checker for donor notifications
+  // Bağışçı bildirimleri için bekleme süresi sona erme denetleyicisi
   useEffect(() => {
     if (!user) return;
 
@@ -163,7 +163,7 @@ const UserLayout = ({ children, user, setUser }) => {
     return () => clearInterval(interval);
   }, [user]);
 
-  // Fetch stats for badges
+  // Rozetlere ilişkin istatistikleri getir
   useEffect(() => {
     if (!user) return;
     const fetchStats = async () => {
@@ -265,7 +265,7 @@ const UserLayout = ({ children, user, setUser }) => {
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
-  // Fetch applications for History Modal
+  // History Modal için uygulamaları getir
   const fetchDonationHistory = async () => {
     setLoadingHistory(true);
     try {
@@ -273,7 +273,7 @@ const UserLayout = ({ children, user, setUser }) => {
       const apps = JSON.parse(localStorage.getItem('bloodApplications') || '[]');
       const userApps = apps.filter(a => a.applicantTc === user?.tc);
       
-      // Arayüzün beklediği formata (DonationRequest objesine) çevirme
+      // Arayüzün beklediği formata (DonationRequest nesnesine) çevirme
       const mappedApps = userApps.map(a => ({
         id: a.id,
         applicationDate: a.date,
@@ -312,7 +312,7 @@ const UserLayout = ({ children, user, setUser }) => {
           localStorage.setItem('user_last_seen_support_ts', maxTs.toString());
           setSupportBadgeCount(0);
         } else {
-          // Eğer bilet üzerinde bizden kaynaklanmayan bir güncelleme varsa (status Open değilse admin işlemi demektir)
+          // Eğer bilet üzerinden kaynaklanmayan bir güncelleme varsa (durum Açık değilse admin işlemi demektir)
           const hasNew = tickets.some(t => new Date(t.updatedAt).getTime() > lastSeen && t.status !== 'Open');
           setSupportBadgeCount(hasNew ? 1 : 0);
         }
@@ -369,7 +369,7 @@ const UserLayout = ({ children, user, setUser }) => {
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw', backgroundColor: '#f1f5f9', overflow: 'hidden', fontFamily: "'Outfit', sans-serif" }}>
       
-      {/* MOBILE HEADER */}
+      {/* MOBİL BAŞLIK */}
       <div style={{
         display: 'none',
         position: 'fixed',
@@ -406,7 +406,7 @@ const UserLayout = ({ children, user, setUser }) => {
         </div>
       </div>
 
-      {/* LEFT SIDEBAR */}
+      {/* SOL YAN ÇUBUĞU */}
       <div style={{
         width: '260px',
         backgroundColor: '#0f172a',
@@ -425,7 +425,7 @@ const UserLayout = ({ children, user, setUser }) => {
         }
       }} className={`sidebar-container ${mobileOpen ? 'mobile-open' : ''}`}>
         
-        {/* Sidebar Header Logo */}
+        {/* Kenar Çubuğu Başlığı Logosu */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1.5rem 1.5rem', borderBottom: '1px solid #1e293b' }}>
           <div style={{ backgroundColor: '#991b1b', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(225,29,72,0.2)' }}>
             <Heart size={18} fill="white" color="white" />
@@ -441,7 +441,7 @@ const UserLayout = ({ children, user, setUser }) => {
           )}
         </div>
 
-        {/* Sidebar Navigation */}
+        {/* Kenar Çubuğu Gezintisi */}
         <div style={{ flex: 1, padding: '1.5rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', overflowY: 'auto' }} className="custom-scrollbar">
           {menuItems.map((item, idx) => {
             const isActive = item.path && location.pathname === item.path;
@@ -503,10 +503,10 @@ const UserLayout = ({ children, user, setUser }) => {
           })}
         </div>
 
-        {/* Sidebar Footer Banners */}
+        {/* Kenar Çubuğu Alt Bilgi Bannerları */}
         <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: '1px solid #1e293b' }}>
 
-          {/* Slogan Banner */}
+          {/* Slogan Banner'ı */}
           <div style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', borderRadius: '8px', padding: '1rem', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', right: '-15px', bottom: '-15px', opacity: 0.1, color: '#ffffff' }}>
               <Heart size={80} fill="white" />
@@ -518,10 +518,10 @@ const UserLayout = ({ children, user, setUser }) => {
 
       </div>
 
-      {/* MAIN CONTENT AREA */}
+      {/* ANA İÇERİK ALANI */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
         
-        {/* TOP HEADER */}
+        {/* ÜST BAŞLIK */}
         <header style={{
           height: '70px',
           backgroundColor: '#ffffff',
@@ -533,10 +533,10 @@ const UserLayout = ({ children, user, setUser }) => {
           flexShrink: 0
         }} className="top-header-container">
 
-          {/* Header Right Actions */}
+          {/* Başlık Sağ Eylemleri */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
             
-            {/* Notifications */}
+            {/* Bildirimler */}
             <div style={{ position: 'relative' }}>
               <button 
                 onClick={() => {
@@ -593,7 +593,7 @@ const UserLayout = ({ children, user, setUser }) => {
                     display: 'flex',
                     flexDirection: 'column'
                   }}>
-                    {/* Header */}
+                    {/* Başlık */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderBottom: '1px solid #f1f5f9', backgroundColor: '#f8fafc' }}>
                       <span style={{ fontSize: '0.85rem', fontWeight: '800', color: '#0f172a' }}>Bildirimler</span>
                       {unreadCount > 0 && (
@@ -606,7 +606,7 @@ const UserLayout = ({ children, user, setUser }) => {
                       )}
                     </div>
 
-                    {/* Notification List */}
+                    {/* Bildirim Listesi */}
                     <div style={{ maxHeight: '280px', overflowY: 'auto' }} className="custom-scrollbar">
                       {notifications.length > 0 ? (
                         notifications.map((n) => {
@@ -675,7 +675,7 @@ const UserLayout = ({ children, user, setUser }) => {
               )}
             </div>
 
-            {/* Messages */}
+            {/* Mesajlar */}
             <button 
               onClick={() => navigate('/my-requests')}
               style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', transition: 'color 0.2s', padding: '0.25rem' }}
@@ -685,13 +685,13 @@ const UserLayout = ({ children, user, setUser }) => {
               <Mail size={20} />
             </button>
 
-            {/* Profile Dropdown Trigger */}
+            {/* Profil Açılır Tetikleyicisi */}
             <div style={{ position: 'relative' }}>
               <button 
                 onClick={() => setShowProfileDropdown(!showProfileDropdown)}
                 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'none', border: 'none', cursor: 'pointer', outline: 'none' }}
               >
-                {/* Initials Avatar */}
+                {/* Baş Harfler Avatarı */}
                 <div style={{ 
                   width: '40px', 
                   height: '40px', 
@@ -707,7 +707,7 @@ const UserLayout = ({ children, user, setUser }) => {
                 }}>
                   {getInitials(user?.fullName)}
                 </div>
-                {/* User Info Text */}
+                {/* Kullanıcı Bilgi Metni */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }} className="header-profile-info">
                   <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0f172a', lineHeight: 1.2 }}>{user?.fullName}</span>
                   <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '500' }}>{user?.role === 'Admin' ? 'Yönetici' : 'Bağışçı'}</span>
@@ -715,7 +715,7 @@ const UserLayout = ({ children, user, setUser }) => {
                 <ChevronDown size={14} style={{ color: '#64748b' }} />
               </button>
 
-              {/* Profile Dropdown Menu */}
+              {/* Profil Açılır Menüsü */}
               {showProfileDropdown && (
                 <>
                   <div 
@@ -761,14 +761,14 @@ const UserLayout = ({ children, user, setUser }) => {
 
         </header>
 
-        {/* PAGE CONTENT CONTAINER */}
+        {/* SAYFA İÇERİĞİ KONTEYNER */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem 2rem' }} className="custom-scrollbar main-layout-scroll">
           {children}
         </div>
 
       </div>
 
-      {/* DONATION HISTORY MODAL */}
+      {/* BAĞIŞ GEÇMİŞİ MODALI */}
       {showHistoryModal && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -856,7 +856,7 @@ const UserLayout = ({ children, user, setUser }) => {
 
 
 
-      {/* Global Embedded CSS styles */}
+      {/* Küresel Gömülü CSS stilleri */}
       <style dangerouslySetInnerHTML={{__html: `
         .dropdown-item:hover {
           background-color: #f1f5f9;

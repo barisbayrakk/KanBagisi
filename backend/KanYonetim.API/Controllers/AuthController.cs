@@ -52,7 +52,7 @@ namespace KanYonetim.API.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // Log activity
+            // Etkinlik günlüğü
             try
             {
                 var activityLog = new ProfileActivityLog
@@ -82,7 +82,7 @@ namespace KanYonetim.API.Controllers
                 Console.WriteLine($"[Activity Log Error] Failed to log registration activity: {ex.Message}");
             }
 
-            // Send Email
+            // E-posta Gönder
             var emailBody = $"<h3>Sisteme Hoş Geldiniz!</h3><p>Kayıt işleminizi tamamlamak için doğrulama kodunuz: <b>{verificationCode}</b></p>";
             try
             {
@@ -93,7 +93,7 @@ namespace KanYonetim.API.Controllers
                 Console.WriteLine($"[Email Error] Failed to send verification email to {user.Email}: {ex.Message}");
             }
 
-            // Print verification code to console for local development testing
+            // Yerel geliştirme testi için doğrulama kodunu konsola yazdırın
             Console.WriteLine($"\n==================================================");
             Console.WriteLine($"[DEVELOPMENT] E-Posta Dogrulama Kodu: {verificationCode}");
             Console.WriteLine($"==================================================\n");
@@ -158,7 +158,7 @@ namespace KanYonetim.API.Controllers
             user.IsEmailVerified = true;
             user.EmailVerificationCode = null;
 
-            // Log activity
+            // Etkinlik günlüğü
             try
             {
                 var activityLog = new ProfileActivityLog
@@ -197,7 +197,7 @@ namespace KanYonetim.API.Controllers
 
                 if (user == null)
                 {
-                    // Create a new user if they don't exist
+                    // Mevcut değilse yeni bir kullanıcı oluşturun
                     user = new User
                     {
                         FullName = payload.Name ?? "Bilinmeyen Kullanıcı",
@@ -213,7 +213,7 @@ namespace KanYonetim.API.Controllers
                     _context.Users.Add(user);
                     await _context.SaveChangesAsync();
                     
-                    // Reload with includes
+                    // İçeriklerle yeniden yükle
                     user = await _context.Users
                         .Include(u => u.BloodType)
                         .Include(u => u.District)

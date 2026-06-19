@@ -76,10 +76,10 @@ namespace KanYonetim.API.Controllers
             _context.SupportMessages.Add(message);
             await _context.SaveChangesAsync();
 
-            // Send SMTP/Mailtrap Notifications
+            // SMTP/Mailtrap Bildirimleri Gönder
             try
             {
-                // Send confirmation to User
+                // Kullanıcıya onay gönder
                 var userMailBody = $@"
                     <h2>Hayat Ağı - Destek Talebi Onayı</h2>
                     <p>Merhaba {user.FullName},</p>
@@ -92,7 +92,7 @@ namespace KanYonetim.API.Controllers
                 ";
                 await _emailService.SendEmailAsync(user.Email, $"Destek Talebi Onayı - #{ticket.Id}", userMailBody);
 
-                // Send notification to Admin(s)
+                // Yöneticilere bildirim gönder
                 var adminEmail = await _context.Users.Where(u => u.Role == "Admin").Select(u => u.Email).FirstOrDefaultAsync() ?? "admin@kanyonetim.com";
                 var adminMailBody = $@"
                     <h2>Hayat Ağı - Yeni Destek Talebi</h2>
@@ -266,12 +266,12 @@ namespace KanYonetim.API.Controllers
 
             var sender = await _context.Users.FindAsync(userId);
 
-            // Send Email Notifications
+            // E-posta Bildirimleri Gönder
             try
             {
                 if (role == "Admin" || role == "SubAdmin")
                 {
-                    // Email to user telling them admin answered
+                    // Kullanıcıya yöneticinin yanıtladığını bildiren e-posta
                     var userMailBody = $@"
                         <h2>Hayat Ağı - Destek Talebi Yanıtı</h2>
                         <p>Merhaba {ticket.User?.FullName},</p>
@@ -296,7 +296,7 @@ namespace KanYonetim.API.Controllers
                 }
                 else
                 {
-                    // Email to admin telling them user answered
+                    // Yöneticiye kullanıcının yanıtladığını bildiren e-posta
                     var adminEmail = await _context.Users.Where(u => u.Role == "Admin").Select(u => u.Email).FirstOrDefaultAsync() ?? "admin@kanyonetim.com";
                     var adminMailBody = $@"
                         <h2>Hayat Ağı - Destek Talebinde Yeni Mesaj</h2>
@@ -347,7 +347,7 @@ namespace KanYonetim.API.Controllers
             ticket.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            // Notify user of status update (e.g. resolved/closed)
+            // Kullanıcıya durum güncellemesini bildir (ör. çözüldü/kapalı)
             try
             {
                 string statusText = dto.Status switch

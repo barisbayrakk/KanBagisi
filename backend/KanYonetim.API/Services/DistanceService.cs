@@ -7,7 +7,7 @@ namespace KanYonetim.API.Services
 
     public class DistanceService : IDistanceService
     {
-        // Haversine formula to calculate distance between two coordinates in km
+        // Km cinsinden iki koordinat arasındaki mesafeyi hesaplamak için Haversine formülü
         public double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
         {
             var R = 6371; // Earth radius in km

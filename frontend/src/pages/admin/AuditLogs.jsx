@@ -53,7 +53,7 @@ const AuditLogs = () => {
   return (
     <div className="animate-in" style={{ paddingBottom: '4rem' }}>
       
-      {/* Header */}
+      {/* Başlık */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2rem' }}>
         <div>
           <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', marginBottom: '0.5rem' }}>Sistem Logları (Audit)</h1>
@@ -63,7 +63,7 @@ const AuditLogs = () => {
 
       <div className="card glass" style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.03)', boxShadow: '0 20px 50px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
         
-        {/* Filters */}
+        {/* Filtreler */}
         <div style={{ padding: '2rem', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ position: 'relative', width: '350px' }}>
             <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
@@ -83,7 +83,7 @@ const AuditLogs = () => {
           </div>
         </div>
 
-        {/* Table */}
+        {/* Masa */}
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>

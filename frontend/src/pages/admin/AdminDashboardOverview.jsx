@@ -66,7 +66,7 @@ const AdminDashboardOverview = () => {
         <p style={{ color: '#64748b', fontSize: '1rem' }}>Gerçek zamanlı platform istatistikleri ve genel durum.</p>
       </div>
 
-      {/* Top Stats Cards */}
+      {/* En İyi İstatistik Kartları */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
         <StatCard title="Toplam Kullanıcı" value={stats.totalUsers} icon={Users} color="#3b82f6" gradient="radial-gradient(circle, #3b82f6 0%, transparent 70%)" trend={12} />
         <StatCard title="Aktif Kan Talebi" value={stats.activeRequests} icon={Activity} color="#991b1b" gradient="radial-gradient(circle, #991b1b 0%, transparent 70%)" trend={5} />
@@ -81,10 +81,10 @@ const AdminDashboardOverview = () => {
         <StatCard title="Günlük Trafik" value={stats.dailySystemTraffic} icon={Activity} color="#64748b" gradient="radial-gradient(circle, #64748b 0%, transparent 70%)" />
       </div>
 
-      {/* Charts Area */}
+      {/* Grafik Alanı */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
         
-        {/* Blood Type Distribution */}
+        {/* Kan Grubu Dağılımı */}
         <div className="card glass" style={{ background: '#ffffff', borderRadius: '10px', padding: '2rem', border: '1px solid rgba(0,0,0,0.03)' }}>
           <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0f172a', marginBottom: '1.5rem' }}>Kan Grubu Dağılımı</h3>
           <div style={{ height: '300px' }}>
@@ -102,7 +102,7 @@ const AdminDashboardOverview = () => {
           </div>
         </div>
 
-        {/* Daily Applications Trend */}
+        {/* Günlük Uygulama Trendi */}
         <div className="card glass" style={{ background: '#ffffff', borderRadius: '10px', padding: '2rem', border: '1px solid rgba(0,0,0,0.03)' }}>
           <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0f172a', marginBottom: '1.5rem' }}>Haftalık Başvuru Trendi</h3>
           <div style={{ height: '300px' }}>
@@ -124,7 +124,7 @@ const AdminDashboardOverview = () => {
           </div>
         </div>
 
-        {/* District Demand */}
+        {/* Bölge Talebi */}
         <div className="card glass" style={{ background: '#ffffff', borderRadius: '10px', padding: '2rem', border: '1px solid rgba(0,0,0,0.03)', gridColumn: '1 / -1' }}>
           <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0f172a', marginBottom: '1.5rem' }}>Bölgelere Göre Talep Yoğunluğu (Top 5)</h3>
           <div style={{ height: '350px' }}>

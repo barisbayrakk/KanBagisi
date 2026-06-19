@@ -21,14 +21,14 @@ const Support = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   
-  // Form states
+  // Form durumları
   const [subject, setSubject] = useState('');
   const [messageText, setMessageText] = useState('');
   const [replyText, setReplyText] = useState('');
   
   const chatEndRef = useRef(null);
 
-  // Fetch Tickets
+  // Bilet Al
   const fetchTickets = async (selectId = null) => {
     try {
       const res = await axios.get('/Support/tickets');
@@ -52,12 +52,12 @@ const Support = () => {
     fetchTickets();
   }, []);
 
-  // Auto-scroll chat to bottom
+  // Sohbeti otomatik olarak aşağıya kaydır
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [selectedTicket?.messages]);
 
-  // Handle Ticket Creation
+  // Bilet Oluşturmayı Yönetin
   const handleCreateTicket = async (e) => {
     e.preventDefault();
     if (!subject.trim() || !messageText.trim()) {
@@ -75,7 +75,7 @@ const Support = () => {
       setSubject('');
       setMessageText('');
       setIsCreating(false);
-      // Fetch and select the new ticket
+      // Yeni bileti getir ve seç
       await fetchTickets(res.data.id);
     } catch (err) {
       console.error(err);
@@ -85,7 +85,7 @@ const Support = () => {
     }
   };
 
-  // Handle Reply Submission
+  // Yanıt Gönderimini İşle
   const handleSendReply = async (e) => {
     e.preventDefault();
     if (!replyText.trim()) return;
@@ -96,7 +96,7 @@ const Support = () => {
         messageText: replyText
       });
       setReplyText('');
-      // Reload ticket data
+      // Bilet verilerini yeniden yükle
       await fetchTickets(selectedTicket.id);
     } catch (err) {
       console.error(err);
@@ -106,13 +106,13 @@ const Support = () => {
     }
   };
 
-  // Format date helper
+  // Tarih yardımcısını biçimlendir
   const formatDate = (dateStr) => {
     const d = new Date(dateStr);
     return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
   };
 
-  // Get status badge settings
+  // Durum rozeti ayarlarını alın
   const getStatusBadge = (status) => {
     switch (status) {
       case 'Open':
@@ -147,7 +147,7 @@ const Support = () => {
       animation: 'fadeInUp 0.5s ease-out' 
     }} className="support-grid">
       
-      {/* LEFT PANEL: TICKETS LIST */}
+      {/* SOL PANEL: BİLET LİSTESİ */}
       <div style={{ 
         backgroundColor: '#ffffff', 
         borderRadius: '10px', 
@@ -238,7 +238,7 @@ const Support = () => {
         </div>
       </div>
 
-      {/* RIGHT PANEL: CONTENT (FORM OR CHAT) */}
+      {/* SAĞ PANEL: İÇERİK (FORM VEYA SOHBET) */}
       <div style={{ 
         backgroundColor: isCreating ? '#0f172a' : '#ffffff', 
         borderRadius: '10px', 
@@ -251,7 +251,7 @@ const Support = () => {
         overflow: 'hidden'
       }}>
         {isCreating ? (
-          /* CREATE TICKET FORM */
+          /* BİLET FORMU OLUŞTURUN */
           <form onSubmit={handleCreateTicket} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', height: '100%' }}>
             <div>
               <h2 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#ffffff', margin: 0 }}>Yeni Destek Talebi</h2>
@@ -344,10 +344,10 @@ const Support = () => {
             </div>
           </form>
         ) : selectedTicket ? (
-          /* CHAT CONVERSATION VIEW */
+          /* SOHBET KONUŞMA GÖRÜNÜMÜ */
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             
-            {/* Chat Header */}
+            {/* Sohbet Başlığı */}
             <div style={{ 
               display: 'flex', 
               justifyContent: 'space-between', 
@@ -373,7 +373,7 @@ const Support = () => {
               </div>
             </div>
 
-            {/* Message History Bubble Area */}
+            {/* Mesaj Geçmişi Kabarcık Alanı */}
             <div style={{ 
               flex: 1, 
               overflowY: 'auto', 
@@ -396,7 +396,7 @@ const Support = () => {
                       gap: '0.75rem' 
                     }}
                   >
-                    {/* Admin Avatar on Left */}
+                    {/* Soldaki Yönetici Avatarı */}
                     {isAdmin && (
                       <div style={{ 
                         width: '32px', 
@@ -441,7 +441,7 @@ const Support = () => {
               <div ref={chatEndRef} />
             </div>
 
-            {/* Chat Input Area */}
+            {/* Sohbet Giriş Alanı */}
             {selectedTicket.status === 'Closed' ? (
               <div style={{ 
                 backgroundColor: '#f1f5f9', 
@@ -501,7 +501,7 @@ const Support = () => {
 
           </div>
         ) : (
-          /* INTRODUCTORY CENTER VIEW */
+          /* GİRİŞ MERKEZ GÖRÜNÜMÜ */
           <div style={{ 
             display: 'flex', 
             flexDirection: 'column', 
